@@ -4,18 +4,21 @@ import (
 	"flag"
 	"fmt"
 	"os"
+	"regexp"
 	"strings"
 	"sync"
 
+	"github.com/MrWong99/gitscanner/checks/binaryfile"
+	"github.com/MrWong99/gitscanner/checks/unicode"
 	mygit "github.com/MrWong99/gitscanner/git"
-	"github.com/go-git/go-git/v5"
-	"github.com/go-git/go-git/v5/plumbing"
+	"github.com/MrWong99/gitscanner/utils"
 )
 
-type RepoCheckFunc func(*git.Repository) error
+type RepoCheckFunc func(*mygit.ClonedRepo) error
 
 var repoChecks = []RepoCheckFunc{
-	searchBinaries,
+	binaryfile.SearchBinaries,
+	unicode.SearchUnicode,
 }
 
 var waitGroup *sync.WaitGroup
@@ -28,7 +31,23 @@ func main() {
 	password := flag.String("password", "", "An optional password for http basic auth.")
 	privateKeyFile := flag.String("ssh-private-key-file", "", "An optional path to a SSH private key file in PEM format.")
 	keyPassword := flag.String("ssh-private-key-password", "", "An optional password if the given private key file is encrypted.")
+	branchPattern := flag.String("branch-pattern", "", "Optional pattern to match refs against. Only matches will be processed in checks that rely on refs.")
 	flag.Parse()
+
+	var pat *regexp.Regexp
+	if *branchPattern == "" {
+		pat = regexp.MustCompile(".*")
+	} else {
+		var err error
+		pat, err = regexp.Compile(*branchPattern)
+		if err != nil {
+			fmt.Printf("Given branch pattern '%s' is not a valid regex: %v", *branchPattern, err)
+			os.Exit(1)
+		}
+	}
+	utils.InitConfig(&utils.GlobalConfig{
+		BranchPattern: pat,
+	})
 
 	if *repositoryPaths == "" {
 		fmt.Println("No repositories defined!")
@@ -44,57 +63,32 @@ func main() {
 
 	allPaths := strings.Split(*repositoryPaths, ",")
 	waitGroup = new(sync.WaitGroup)
-	waitGroup.Add(len(allPaths))
 	for _, path := range allPaths {
-		go func(p string) {
-			defer waitGroup.Done()
-			repo, err := mygit.LoadRepoInMemory(p)
-			if err != nil {
-				fmt.Printf("Error while opening repo '%s': %v\n", p, err)
-				return
-			}
-			repositoryCheck(repo)
-		}(path)
+		repo, err := mygit.CloneRepo(path)
+		if err != nil {
+			fmt.Printf("Error while opening repo '%s': %v\n", path, err)
+			return
+		}
+		repositoryCheck(repo)
+		if err := repo.Cleanup(); err != nil {
+			fmt.Printf("Error while cleaning up repo %s: %v", utils.RepoName(repo.Repo), err)
+		}
 	}
 
 	waitGroup.Wait()
 }
 
-func repositoryCheck(repo *git.Repository) error {
-	fmt.Printf("Checking repository %v\n", repo)
+func repositoryCheck(repo *mygit.ClonedRepo) error {
+	waitGroup.Add(len(repoChecks))
 	for _, check := range repoChecks {
-		fmt.Printf("Checking repository %v with function %v\n", repo, check)
-		go func(r *git.Repository, checkFn RepoCheckFunc) {
-			fmt.Printf("Checking repository %v with function %v\n", r, checkFn)
+		go func(r *mygit.ClonedRepo, checkFn RepoCheckFunc) {
+			defer waitGroup.Done()
+			fmt.Printf("Checking repository %v with function %s\n", utils.RepoName(r.Repo), utils.FunctionName(checkFn))
 			err := checkFn(repo)
 			if err != nil {
-				fmt.Printf("Error while checking repository %v with function %v: %v\n", r, checkFn, err)
+				fmt.Printf("Error while checking repository %s with function %s: %v\n", utils.RepoName(r.Repo), utils.FunctionName(checkFn), err)
 			}
 		}(repo, check)
 	}
-	return nil
-}
-
-func searchBinaries(repo *git.Repository) error {
-	branchIt, err := repo.Branches()
-	if err != nil {
-		return err
-	}
-	worktree, err := repo.Worktree()
-	if err != nil {
-		return err
-	}
-	branchIt.ForEach(func(r *plumbing.Reference) error {
-		fmt.Printf("Processing branch %s with Root %s\n", r.Name(), worktree.Filesystem.Root())
-		err = worktree.Checkout(&git.CheckoutOptions{
-			Branch: r.Name(),
-			Force:  true,
-		})
-		if err != nil {
-			return nil
-		}
-		fmt.Printf("Processing branch %s with Root %s\n", r.Name(), worktree.Filesystem.Root())
-		return nil
-	})
 	return nil
 }
