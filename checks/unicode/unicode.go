@@ -83,7 +83,7 @@ func searchForIllegal(t *object.Tree, repo *mygit.ClonedRepo, branchRef *plumbin
 					AdditionalInfo: map[string]interface{}{
 						"character": strconv.QuoteRuneToASCII(illegalRune),
 						"filesize":  utils.ByteCountDecimal(f.Size),
-						"filemode":  f.Mode,
+						"filemode":  f.Mode.String(),
 					},
 				}
 			}

@@ -34,7 +34,7 @@ func SearchBinaries(wrapRepo *mygit.ClonedRepo, output chan<- utils.SingleCheck)
 					CheckName: utils.FunctionName(SearchBinaries),
 					AdditionalInfo: map[string]interface{}{
 						"filesize": utils.ByteCountDecimal(f.Size),
-						"filemode": f.Mode,
+						"filemode": f.Mode.String(),
 					},
 				}
 			}
