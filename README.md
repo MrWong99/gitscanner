@@ -35,3 +35,7 @@ Usage of ./gitscanner:
 * **[unicode.SearchUnicode](/checks/unicode/unicode.go):** Searches for specific unicode characters in each file on each branch (local or remote) that matches the `-branch-pattern`. See [trojan-source.pdf](https://trojansource.codes/trojan-source.pdf).
 * **[commitmeta.CheckCommits](/checks/commitmeta/commitmeta.go):** Checks every commits author and committer name and email for expected match against `-email-pattern` and `-name-pattern`.
   
+## Build locally
+
+1. Install Go
+2. `go build .`
