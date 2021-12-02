@@ -50,7 +50,7 @@ func main() {
 	if err == nil {
 		fmt.Printf("%s\n\n", jsonStr)
 	} else {
-		fmt.Printf("JSON failed '%v'\n", err)
+		fmt.Fprintf(os.Stderr, "JSON failed '%v'\n", err)
 		for _, v := range res {
 			fmt.Printf("%v\n\n", *v)
 		}
@@ -63,7 +63,7 @@ func extractPattern(input string) *regexp.Regexp {
 	}
 	pat, err := regexp.Compile(input)
 	if err != nil {
-		fmt.Printf("Given pattern '%s' is not a valid regex: %v\n", input, err)
+		fmt.Fprintf(os.Stderr, "Given pattern '%s' is not a valid regex: %v\n", input, err)
 		os.Exit(1)
 	}
 	return pat

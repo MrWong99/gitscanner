@@ -2,6 +2,7 @@ package checks
 
 import (
 	"fmt"
+	"os"
 	"sync"
 	"time"
 
@@ -39,7 +40,7 @@ func consolidateChecks(path string) *utils.CheckResultConsolidated {
 	}
 	res := repositoryCheck(repo)
 	if err := repo.Cleanup(); err != nil {
-		fmt.Printf("Error while cleaning up repo %s: %v", utils.RepoName(repo.Repo), err)
+		fmt.Fprintf(os.Stderr, "Error while cleaning up repo %s: %v", utils.RepoName(repo.Repo), err)
 	}
 	return res
 }
@@ -55,10 +56,9 @@ func repositoryCheck(repo *mygit.ClonedRepo) *utils.CheckResultConsolidated {
 	for _, check := range repoChecks {
 		checkChan := make(chan utils.SingleCheck)
 		go func(r *mygit.ClonedRepo, checkFn RepoCheckFunc, outputs chan<- utils.SingleCheck) {
-			fmt.Printf("Checking repository %v with function %s\n", utils.RepoName(r.Repo), utils.FunctionName(checkFn))
 			err := checkFn(repo, checkChan)
 			if err != nil {
-				fmt.Printf("Error while checking repository %s with function %s: %v\n", utils.RepoName(r.Repo), utils.FunctionName(checkFn), err)
+				fmt.Fprintf(os.Stderr, "Error while checking repository %s with function %s: %v\n", utils.RepoName(r.Repo), utils.FunctionName(checkFn), err)
 			}
 		}(repo, check, checkChan)
 		go awaitCheckResults(checkChan, res, waitGroup)

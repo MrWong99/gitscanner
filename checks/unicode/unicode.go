@@ -3,6 +3,7 @@ package unicode
 import (
 	"fmt"
 	"io/ioutil"
+	"os"
 	"strconv"
 	"strings"
 	"sync"
@@ -61,13 +62,13 @@ func searchForIllegal(t *object.Tree, repo *mygit.ClonedRepo, branchRef *plumbin
 	t.Files().ForEach(func(f *object.File) error {
 		reader, err := f.Reader()
 		if err != nil {
-			fmt.Printf("Could not open file %s in repo %s with branch %s\n", f.Name, utils.RepoName(repo.Repo), branchRef.Name())
+			fmt.Fprintf(os.Stderr, "Could not open file %s in repo %s with branch %s\n", f.Name, utils.RepoName(repo.Repo), branchRef.Name())
 			return err
 		}
 		defer reader.Close()
 		content, err := ioutil.ReadAll(reader)
 		if err != nil {
-			fmt.Printf("Could not open file %s in repo %s with branch %s\n", f.Name, utils.RepoName(repo.Repo), branchRef.Name())
+			fmt.Fprintf(os.Stderr, "Could not open file %s in repo %s with branch %s\n", f.Name, utils.RepoName(repo.Repo), branchRef.Name())
 			return err
 		}
 		if !utf8.Valid(content) {
