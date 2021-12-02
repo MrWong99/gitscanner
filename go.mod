@@ -2,7 +2,10 @@ module github.com/MrWong99/gitscanner
 
 go 1.17
 
-require github.com/go-git/go-git/v5 v5.4.2
+require (
+	github.com/go-git/go-git/v5 v5.4.2
+	github.com/gorilla/mux v1.8.0
+)
 
 require (
 	github.com/Microsoft/go-winio v0.4.16 // indirect

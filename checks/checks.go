@@ -24,12 +24,33 @@ var repoChecks = []RepoCheckFunc{
 func CheckAllRepositories(repos []string) []*utils.CheckResultConsolidated {
 	var results []*utils.CheckResultConsolidated
 	for _, path := range repos {
-		results = append(results, consolidateChecks(path))
+		results = append(results, consolidateChecks(path, repoChecks))
 	}
 	return results
 }
 
-func consolidateChecks(path string) *utils.CheckResultConsolidated {
+func CheckAllRepositoriesSpecificChecks(repos, checks []string) []*utils.CheckResultConsolidated {
+	var results []*utils.CheckResultConsolidated
+	checkFns := matchingChecks(checks)
+	for _, path := range repos {
+		results = append(results, consolidateChecks(path, checkFns))
+	}
+	return results
+}
+
+func matchingChecks(checkNames []string) []RepoCheckFunc {
+	var res []RepoCheckFunc
+	for _, name := range checkNames {
+		for _, fn := range repoChecks {
+			if name == utils.FunctionName(fn) {
+				res = append(res, fn)
+			}
+		}
+	}
+	return res
+}
+
+func consolidateChecks(path string, checkFns []RepoCheckFunc) *utils.CheckResultConsolidated {
 	repo, err := mygit.CloneRepo(path)
 	if err != nil {
 		return &utils.CheckResultConsolidated{
@@ -38,22 +59,22 @@ func consolidateChecks(path string) *utils.CheckResultConsolidated {
 			Error:      err.Error(),
 		}
 	}
-	res := repositoryCheck(repo)
+	res := repositoryCheck(repo, checkFns)
 	if err := repo.Cleanup(); err != nil {
 		fmt.Fprintf(os.Stderr, "Error while cleaning up repo %s: %v", utils.RepoName(repo.Repo), err)
 	}
 	return res
 }
 
-func repositoryCheck(repo *mygit.ClonedRepo) *utils.CheckResultConsolidated {
+func repositoryCheck(repo *mygit.ClonedRepo, checkFns []RepoCheckFunc) *utils.CheckResultConsolidated {
 	res := &utils.CheckResultConsolidated{
 		Date:       time.Now(),
 		Repository: utils.RepoName(repo.Repo),
 		Checks:     []utils.SingleCheck{},
 	}
 	waitGroup := new(sync.WaitGroup)
-	waitGroup.Add(len(repoChecks))
-	for _, check := range repoChecks {
+	waitGroup.Add(len(checkFns))
+	for _, check := range checkFns {
 		checkChan := make(chan utils.SingleCheck)
 		go func(r *mygit.ClonedRepo, checkFn RepoCheckFunc, outputs chan<- utils.SingleCheck) {
 			err := checkFn(repo, checkChan)

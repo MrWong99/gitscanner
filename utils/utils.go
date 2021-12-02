@@ -19,18 +19,23 @@ type GlobalConfig struct {
 }
 
 type SingleCheck struct {
-	Origin         string
-	Branch         string
-	CheckName      string
-	Acknowledged   bool
-	AdditionalInfo map[string]interface{}
+	Origin         string                 `json:"origin"`
+	Branch         string                 `json:"branch"`
+	CheckName      string                 `json:"checkName"`
+	Acknowledged   bool                   `json:"acknowledged"`
+	AdditionalInfo map[string]interface{} `json:"additionalInfo"`
 }
 
 type CheckResultConsolidated struct {
-	Date       time.Time
-	Repository string
-	Error      string
-	Checks     []SingleCheck
+	Date       time.Time     `json:"date"`
+	Repository string        `json:"repository"`
+	Error      string        `json:"error"`
+	Checks     []SingleCheck `json:"checks"`
+}
+
+type SearchRequestBody struct {
+	Path       string   `json:"path"`
+	CheckNames []string `json:"checkNames"`
 }
 
 // Initialize the global configuration with given config.
