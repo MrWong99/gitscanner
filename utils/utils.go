@@ -78,3 +78,14 @@ func ByteCountDecimal(b int64) string {
 	}
 	return fmt.Sprintf("%.1f %cB", float64(b)/float64(div), "kMGTPE"[exp])
 }
+
+func ExtractPattern(input string) (*regexp.Regexp, error) {
+	if input == "" {
+		return regexp.MustCompile(".*"), nil
+	}
+	pat, err := regexp.Compile(input)
+	if err != nil {
+		return nil, err
+	}
+	return pat, nil
+}

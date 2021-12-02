@@ -14,12 +14,8 @@ import (
 var sshKeyAuth, httpAuth transport.AuthMethod
 
 // Set the ssh private key in PEM format to use for authentication. If needed provide the password.
-func InitSshKey(privateKeyFile, password string) error {
-	_, err := os.Stat(privateKeyFile)
-	if err != nil {
-		return err
-	}
-	publicKeys, err := ssh.NewPublicKeysFromFile("git", privateKeyFile, password)
+func InitSshKey(privateKeyFileContent []byte, password string) error {
+	publicKeys, err := ssh.NewPublicKeys("git", privateKeyFileContent, password)
 	if err != nil {
 		return err
 	}
@@ -86,6 +82,9 @@ func CloneRepo(url string) (*ClonedRepo, error) {
 
 func wrap(tmpPath string, repo *git.Repository, auth transport.AuthMethod, err error) (*ClonedRepo, error) {
 	if err != nil {
+		if !strings.HasPrefix(tmpPath, "file://") {
+			os.RemoveAll(tmpPath)
+		}
 		return nil, err
 	}
 	return &ClonedRepo{

@@ -15,7 +15,7 @@ import (
 
 type RepoCheckFunc func(*mygit.ClonedRepo, chan<- utils.SingleCheck) error
 
-var repoChecks = []RepoCheckFunc{
+var RepoChecks = []RepoCheckFunc{
 	binaryfile.SearchBinaries,
 	unicode.SearchUnicode,
 	commitmeta.CheckCommitAuthor,
@@ -24,7 +24,7 @@ var repoChecks = []RepoCheckFunc{
 func CheckAllRepositories(repos []string) []*utils.CheckResultConsolidated {
 	var results []*utils.CheckResultConsolidated
 	for _, path := range repos {
-		results = append(results, consolidateChecks(path, repoChecks))
+		results = append(results, consolidateChecks(path, RepoChecks))
 	}
 	return results
 }
@@ -41,7 +41,7 @@ func CheckAllRepositoriesSpecificChecks(repos, checks []string) []*utils.CheckRe
 func matchingChecks(checkNames []string) []RepoCheckFunc {
 	var res []RepoCheckFunc
 	for _, name := range checkNames {
-		for _, fn := range repoChecks {
+		for _, fn := range RepoChecks {
 			if name == utils.FunctionName(fn) {
 				res = append(res, fn)
 			}
