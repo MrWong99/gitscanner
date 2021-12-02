@@ -1,6 +1,7 @@
 package main
 
 import (
+	"encoding/json"
 	"flag"
 	"fmt"
 	"os"
@@ -45,8 +46,14 @@ func main() {
 
 	allPaths := strings.Split(*repositoryPaths, ",")
 	res := checks.CheckAllRepositories(allPaths)
-	for _, v := range res {
-		fmt.Printf("%v\n\n", *v)
+	jsonStr, err := json.Marshal(res)
+	if err == nil {
+		fmt.Printf("%s\n\n", jsonStr)
+	} else {
+		fmt.Printf("JSON failed '%v'\n", err)
+		for _, v := range res {
+			fmt.Printf("%v\n\n", *v)
+		}
 	}
 }
 
