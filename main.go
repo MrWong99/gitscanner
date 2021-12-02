@@ -6,24 +6,11 @@ import (
 	"os"
 	"regexp"
 	"strings"
-	"sync"
 
-	"github.com/MrWong99/gitscanner/checks/binaryfile"
-	"github.com/MrWong99/gitscanner/checks/commitmeta"
-	"github.com/MrWong99/gitscanner/checks/unicode"
+	"github.com/MrWong99/gitscanner/checks"
 	mygit "github.com/MrWong99/gitscanner/git"
 	"github.com/MrWong99/gitscanner/utils"
 )
-
-type RepoCheckFunc func(*mygit.ClonedRepo) error
-
-var repoChecks = []RepoCheckFunc{
-	binaryfile.SearchBinaries,
-	unicode.SearchUnicode,
-	commitmeta.CheckCommits,
-}
-
-var waitGroup *sync.WaitGroup
 
 func main() {
 	repositoryPaths := flag.String("repositories", "",
@@ -57,35 +44,10 @@ func main() {
 	}
 
 	allPaths := strings.Split(*repositoryPaths, ",")
-	waitGroup = new(sync.WaitGroup)
-	for _, path := range allPaths {
-		repo, err := mygit.CloneRepo(path)
-		if err != nil {
-			fmt.Printf("Error while opening repo '%s': %v\n", path, err)
-			return
-		}
-		repositoryCheck(repo)
-		if err := repo.Cleanup(); err != nil {
-			fmt.Printf("Error while cleaning up repo %s: %v", utils.RepoName(repo.Repo), err)
-		}
+	res := checks.CheckAllRepositories(allPaths)
+	for _, v := range res {
+		fmt.Printf("%v\n\n", *v)
 	}
-
-	waitGroup.Wait()
-}
-
-func repositoryCheck(repo *mygit.ClonedRepo) error {
-	waitGroup.Add(len(repoChecks))
-	for _, check := range repoChecks {
-		go func(r *mygit.ClonedRepo, checkFn RepoCheckFunc) {
-			defer waitGroup.Done()
-			fmt.Printf("Checking repository %v with function %s\n", utils.RepoName(r.Repo), utils.FunctionName(checkFn))
-			err := checkFn(repo)
-			if err != nil {
-				fmt.Printf("Error while checking repository %s with function %s: %v\n", utils.RepoName(r.Repo), utils.FunctionName(checkFn), err)
-			}
-		}(repo, check)
-	}
-	return nil
 }
 
 func extractPattern(input string) *regexp.Regexp {

@@ -26,7 +26,8 @@ var illegalUnicodeChars = []rune{
 	'\u202c',
 }
 
-func SearchUnicode(wrapRepo *mygit.ClonedRepo) error {
+func SearchUnicode(wrapRepo *mygit.ClonedRepo, output chan<- utils.SingleCheck) error {
+	defer close(output)
 	repo := wrapRepo.Repo
 	branchIt, err := repo.References()
 	if err != nil {
@@ -48,7 +49,7 @@ func SearchUnicode(wrapRepo *mygit.ClonedRepo) error {
 		wg.Add(1)
 		go func(t *object.Tree) {
 			defer wg.Done()
-			searchForIllegal(t, wrapRepo, branchRef)
+			searchForIllegal(t, wrapRepo, branchRef, output)
 		}(tree)
 		return nil
 	})
@@ -56,26 +57,34 @@ func SearchUnicode(wrapRepo *mygit.ClonedRepo) error {
 	return err
 }
 
-func searchForIllegal(t *object.Tree, repo *mygit.ClonedRepo, branchRef *plumbing.Reference) {
+func searchForIllegal(t *object.Tree, repo *mygit.ClonedRepo, branchRef *plumbing.Reference, output chan<- utils.SingleCheck) {
 	t.Files().ForEach(func(f *object.File) error {
 		reader, err := f.Reader()
 		if err != nil {
 			fmt.Printf("Could not open file %s in repo %s with branch %s\n", f.Name, utils.RepoName(repo.Repo), branchRef.Name())
-			return nil
+			return err
 		}
 		defer reader.Close()
 		content, err := ioutil.ReadAll(reader)
 		if err != nil {
 			fmt.Printf("Could not open file %s in repo %s with branch %s\n", f.Name, utils.RepoName(repo.Repo), branchRef.Name())
-			return nil
+			return err
 		}
 		if !utf8.Valid(content) {
 			return nil
 		}
 		for _, illegalRune := range illegalUnicodeChars {
 			if strings.ContainsRune(string(content), illegalRune) {
-				fmt.Printf("Found file '%s' that contains illegal unicode character %s in repo %s, branch %s\n",
-					f.Name, strconv.QuoteRuneToASCII(illegalRune), utils.RepoName(repo.Repo), branchRef.Name())
+				output <- utils.SingleCheck{
+					Origin:    f.Name,
+					Branch:    branchRef.Name().String(),
+					CheckName: utils.FunctionName(SearchUnicode),
+					AdditionalInfo: map[string]interface{}{
+						"character": strconv.QuoteRuneToASCII(illegalRune),
+						"filesize":  utils.ByteCountDecimal(f.Size),
+						"filemode":  f.Mode,
+					},
+				}
 			}
 		}
 		return nil

@@ -44,7 +44,7 @@ type ClonedRepo struct {
 
 // Deletes any local content in TempDir.
 func (repo *ClonedRepo) Cleanup() error {
-	if repo.LocalDir != "" && !strings.HasPrefix(repo.LocalDir, os.TempDir()) {
+	if repo.LocalDir != "" && !strings.HasPrefix(repo.LocalDir, "file://") {
 		return os.RemoveAll(repo.LocalDir)
 	}
 	return nil
@@ -76,8 +76,8 @@ func CloneRepo(url string) (*ClonedRepo, error) {
 			Progress: os.Stderr,
 		})
 	} else if strings.HasPrefix(url, "file://") {
-		clonedPath = strings.TrimPrefix(url, "file://")
-		repo, err = git.PlainOpen(clonedPath)
+		clonedPath = url
+		repo, err = git.PlainOpen(strings.TrimPrefix(url, "file://"))
 	} else {
 		return nil, errors.New("Given url does not match any known url type: " + url)
 	}
