@@ -89,7 +89,7 @@ When started in server mode *gitscanner* will provide the following endpoints:
   * `http(s)://<remote URL>`
   * `git@<remote URL>`
   * `file://<path>` -> will only search on the local filesystem of the server
-* `checks`: a list of check identifiers to determine with checks are to be performed. See [GET checks](#GET-api-v1-checks---retrieve-the-list-of-possible-checks).
+* `checks`: a list of check identifiers to determine with checks are to be performed. See [GET checks](#get-apiv1checks---retrieve-the-list-of-possible-checks).
 
 *Example:*
 
