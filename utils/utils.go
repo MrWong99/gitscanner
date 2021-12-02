@@ -12,6 +12,8 @@ var config *GlobalConfig
 
 type GlobalConfig struct {
 	BranchPattern *regexp.Regexp
+	NamePattern   *regexp.Regexp
+	EmailPattern  *regexp.Regexp
 }
 
 // Initialize the global configuration with given config.

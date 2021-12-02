@@ -9,6 +9,7 @@ import (
 	"sync"
 
 	"github.com/MrWong99/gitscanner/checks/binaryfile"
+	"github.com/MrWong99/gitscanner/checks/commitmeta"
 	"github.com/MrWong99/gitscanner/checks/unicode"
 	mygit "github.com/MrWong99/gitscanner/git"
 	"github.com/MrWong99/gitscanner/utils"
@@ -19,6 +20,7 @@ type RepoCheckFunc func(*mygit.ClonedRepo) error
 var repoChecks = []RepoCheckFunc{
 	binaryfile.SearchBinaries,
 	unicode.SearchUnicode,
+	commitmeta.CheckCommits,
 }
 
 var waitGroup *sync.WaitGroup
@@ -32,21 +34,14 @@ func main() {
 	privateKeyFile := flag.String("ssh-private-key-file", "", "An optional path to a SSH private key file in PEM format.")
 	keyPassword := flag.String("ssh-private-key-password", "", "An optional password if the given private key file is encrypted.")
 	branchPattern := flag.String("branch-pattern", "", "Optional pattern to match refs against. Only matches will be processed in checks that rely on refs.")
+	namePattern := flag.String("name-pattern", "", "Pattern to match all commiter and author names against. This will be used for the commitmeta.CheckCommits check.")
+	emailPattern := flag.String("email-pattern", "", "Pattern to match all commiter and author emails against. This will be used for the commitmeta.CheckCommits check.")
 	flag.Parse()
 
-	var pat *regexp.Regexp
-	if *branchPattern == "" {
-		pat = regexp.MustCompile(".*")
-	} else {
-		var err error
-		pat, err = regexp.Compile(*branchPattern)
-		if err != nil {
-			fmt.Printf("Given branch pattern '%s' is not a valid regex: %v", *branchPattern, err)
-			os.Exit(1)
-		}
-	}
 	utils.InitConfig(&utils.GlobalConfig{
-		BranchPattern: pat,
+		BranchPattern: extractPattern(*branchPattern),
+		NamePattern:   extractPattern(*namePattern),
+		EmailPattern:  extractPattern(*emailPattern),
 	})
 
 	if *repositoryPaths == "" {
@@ -91,4 +86,16 @@ func repositoryCheck(repo *mygit.ClonedRepo) error {
 		}(repo, check)
 	}
 	return nil
+}
+
+func extractPattern(input string) *regexp.Regexp {
+	if input == "" {
+		return regexp.MustCompile(".*")
+	}
+	pat, err := regexp.Compile(input)
+	if err != nil {
+		fmt.Printf("Given pattern '%s' is not a valid regex: %v\n", input, err)
+		os.Exit(1)
+	}
+	return pat
 }
