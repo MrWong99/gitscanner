@@ -1,0 +1,32 @@
+[
+    {
+    "path": "opt/kisters/file1.ts",
+    "type": "TS File",
+    "size": "5MB"
+    },
+    {
+    "path": "opt/kisters/file2.ts",
+    "type": "TS File",
+    "size": "1MB"
+    },
+    {
+    "path": "opt/kisters/file3.ts",
+    "type": "TS File",
+    "size": "3MB"
+    },
+    {
+    "path": "opt/kisters/file4.ts",
+    "type": "TS File",
+    "size": "4MB"
+    },
+    {
+    "path": "opt/kisters/file5.ts",
+    "type": "TS File",
+    "size": "4,5MB"
+    },
+    {
+    "path": "opt/kisters/file6.ts",
+    "type": "TS File",
+    "size": "1,5MB"
+    }
+]

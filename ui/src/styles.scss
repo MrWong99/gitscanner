@@ -1,0 +1,12 @@
+/* You can add global styles to this file, and also import other style files */
+/* Application-wide Styles */
+@font-face {
+  font-family: "OpenSans";
+  src: local("OpenSans"), url(./assets/fonts/OpenSans/OpenSans-Regular.ttf) format("truetype");
+}
+body {
+  margin: 2em;
+}
+* {
+  font-family: "OpenSans", sans-serif;
+}

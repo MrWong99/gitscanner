@@ -1,0 +1,69 @@
+<div *ngIf="data.length > 0" class="card">
+    <h1>Check Results</h1>
+    <div *ngIf="errors.length > 0">
+        <h2>
+            <span>
+                <i class="fa fa-exclamation-circle error-icon-style" aria-hidden="true"></i>Errors
+            </span>
+        </h2>
+        <p-table [value]="errors" responsiveLayout="scroll">
+            <ng-template pTemplate="header">
+                <tr>
+                    <th pSortableColumn="repository">Repository <p-sortIcon field="repository"></p-sortIcon></th>
+                    <th pSortableColumn="error">Error <p-sortIcon field="error"></p-sortIcon></th>                    
+                </tr>
+            </ng-template>
+            <ng-template pTemplate="body" let-rowData>
+                <tr>
+                    <td>{{rowData.repository}}</td>                         
+                    <td>{{rowData.error}}</td>
+                </tr>
+            </ng-template>
+        </p-table>
+    </div>
+    <div>
+        <h2>Scan Results</h2>    
+        <p-table [value]="data" [paginator]="true" [rows]="10" [showCurrentPageReport]="true" responsiveLayout="scroll"
+            currentPageReportTemplate="Showing {first} to {last} of {totalRecords} entries" [rowsPerPageOptions]="[10,25,50]">
+            <ng-template pTemplate="header"> 
+                <tr>
+                    <th pSortableColumn="repository">Repository <p-sortIcon field="repository"></p-sortIcon></th>
+                    <th pSortableColumn="origin">Origin <p-sortIcon field="origin"></p-sortIcon></th>
+                    <th pSortableColumn="branch">Branch <p-sortIcon field="branch"></p-sortIcon></th>
+                    <th pSortableColumn="checkName">Checkname <p-sortIcon field="checkName"></p-sortIcon></th>
+                    <th *ngIf="isCommitSearch()" pSortableColumn="authorEmail">Author Email <p-sortIcon field="authorEmail"></p-sortIcon></th>                
+                    <th *ngIf="isCommitSearch()" pSortableColumn="authorName">Author Name <p-sortIcon field="authorName"></p-sortIcon></th>
+                    <th *ngIf="isUnicodeSearch()" pSortableColumn="character">Character <p-sortIcon field="character"></p-sortIcon></th>
+                    <th *ngIf="isCommitSearch()" pSortableColumn="commiterEmail">Commiter Email <p-sortIcon field="commiterEmail"></p-sortIcon></th>
+                    <th *ngIf="isCommitSearch()" pSortableColumn="commitMessage">Commit Message <p-sortIcon field="commitMessage"></p-sortIcon></th>
+                    <th *ngIf="isCommitSearch()" pSortableColumn="commiterName">Commiter Name <p-sortIcon field="commiterName"></p-sortIcon></th>
+                    <th *ngIf="isBinariesSearch()" pSortableColumn="filemode">File Mode <p-sortIcon field="filemode"></p-sortIcon></th>
+                    <th *ngIf="isBinariesSearch()" pSortableColumn="filesize">File Size <p-sortIcon field="filesize"></p-sortIcon></th>
+                    <th *ngIf="isCommitSearch()" pSortableColumn="numberOfParents">Number of Parents <p-sortIcon field="numberOfParents"></p-sortIcon></th>
+                </tr>
+            </ng-template>
+            <ng-template pTemplate="body" let-data>
+                <tr>
+                    <td>{{data.repository}}</td>                         
+                    <td>{{data.checks.additionalInfo}}</td>
+                    <td>{{data.checks.branch}}</td>
+                    <td>{{getCheckName(data.checks.checkName)}}</td>
+                    <td *ngIf="isCommitSearch()">{{data.checks.additionalInfo.authorEmail}}</td>                
+                    <td *ngIf="isCommitSearch()">{{data.checks.additionalInfo.authorName}}</td>
+                    <td *ngIf="isUnicodeSearch()">{{data.checks.additionalInfo.character}}</td>
+                    <td *ngIf="isCommitSearch()">{{data.checks.additionalInfo.commiterEmail}}</td>                
+                    <td *ngIf="isCommitSearch()">{{data.checks.additionalInfo.commitMessage}}</td>
+                    <td *ngIf="isCommitSearch()">{{data.checks.additionalInfo.commiterName}}</td>
+                    <td *ngIf="isBinariesSearch() || isUnicodeSearch()">{{data.checks.additionalInfo.filemode}}</td>
+                    <td *ngIf="isBinariesSearch() || isUnicodeSearch()">{{data.checks.additionalInfo.filesize}}</td>
+                    <td *ngIf="isCommitSearch()">{{data.checks.additionalInfo.numberOfParents}}</td>                
+                </tr>
+            </ng-template>    
+            <ng-template pTemplate="emptymessage">
+                <tr>
+                    <td colspan="8">No data found.</td>
+                </tr>
+            </ng-template>    
+        </p-table>
+    </div>
+</div>

@@ -1,0 +1,9 @@
+.label-style {
+    font-weight: 600;
+}
+.info-text {
+    padding-bottom: 1em;
+}
+:host ::ng-deep .p-dialog .p-dialog-footer button {
+    width: 10em;
+}
