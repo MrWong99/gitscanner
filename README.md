@@ -43,9 +43,9 @@ Usage of ./gitscanner:
 
 ## Performed checks
 
-* **[binaryfile.SearchBinaries](/checks/binaryfile/binaryfile.go):** Searches for any binary files on each branch (local or remote) that matches the `-branch-pattern`.
-* **[unicode.SearchUnicode](/checks/unicode/unicode.go):** Searches for specific unicode characters in each file on each branch (local or remote) that matches the `-branch-pattern`. See [trojan-source.pdf](https://trojansource.codes/trojan-source.pdf).
-* **[commitmeta.CheckCommits](/checks/commitmeta/commitmeta.go):** Checks every commits author and committer name and email for expected match against `-email-pattern` and `-name-pattern`.
+* **[SearchBinaries](/checks/binaryfile/binaryfile.go):** Searches for any binary files on each branch (local or remote) that matches the `-branch-pattern`.
+* **[SearchIllegalUnicodeCharacters](/checks/unicode/unicode.go):** Searches for specific unicode characters in each file on each branch (local or remote) that matches the `-branch-pattern`. See [trojan-source.pdf](https://trojansource.codes/trojan-source.pdf).
+* **[CheckCommitMetaInformation](/checks/commitmeta/commitmeta.go):** Checks every commits author and committer name and email for expected match against `-email-pattern` and `-name-pattern`.
   
 ## Build locally
 
@@ -56,7 +56,7 @@ Usage of ./gitscanner:
 
 Adding tests is very simple:
 
-1. Write a go function that has this signature:
+1. Write a type implementing the [Checker interface](checks/checks.go#L39)
 ```go
 package myawesometest
 
@@ -65,12 +65,15 @@ import (
     "github.com/MrWong99/gitscanner/utils"
 )
 
-func MyAwesomeTest(wrapRepo *mygit.ClonedRepo, output chan<- utils.SingleCheck) error {
+type MyTest struct{
+}
+
+func (*MyTest) Check(wrapRepo *mygit.ClonedRepo, output chan<- *utils.SingleCheck) error {
     defer close(output)
     // perform checks here and write any found issues into the output channel
 }
 ```
-2. Add the function to the list of possible checks in [checks/checks.go](/checks/checks.go#L18-22)
+2. Add the function to the list of possible checks in [main.go](main.go#L45-47)
 
 ## REST API
 
@@ -97,9 +100,9 @@ When started in server mode *gitscanner* will provide the following endpoints:
 {
   "path": "git@github.com:go-git/go-git.git,https://gitlab.com/gitlab-org/gitlab.git",
   "checkNames": [
-    "github.com/MrWong99/gitscanner/checks/commitmeta.CheckCommitAuthor",
-    "github.com/MrWong99/gitscanner/checks/unicode.SearchUnicode",
-    "github.com/MrWong99/gitscanner/checks/binaryfile.SearchBinaries"
+    "SearchBinaries",
+    "CheckCommitMetaInformation",
+    "SearchIllegalUnicodeCharacters"
   ]
 }
 ```
@@ -129,7 +132,7 @@ When started in server mode *gitscanner* will provide the following endpoints:
             {
                 "origin": "Commit 65508c0d5f0ea52ce3d93f77f471359f4ec1d1bc",
                 "branch": "",
-                "checkName": "github.com/MrWong99/gitscanner/checks/commitmeta.CheckCommitAuthor",
+                "checkName": "CheckCommitMetaInformation",
                 "acknowledged": false,
                 "additionalInfo": {
                     "authorEmail": "shady.dude@inter.net",
@@ -143,7 +146,7 @@ When started in server mode *gitscanner* will provide the following endpoints:
             {
                 "origin": "app/src/main/res/mipmap-xxhdpi/ic_wishlist_round.png",
                 "branch": "refs/remotes/origin/master",
-                "checkName": "github.com/MrWong99/gitscanner/checks/binaryfile.SearchBinaries",
+                "checkName": "SearchBinaries",
                 "acknowledged": false,
                 "additionalInfo": {
                     "filemode": "0100644",
@@ -153,7 +156,7 @@ When started in server mode *gitscanner* will provide the following endpoints:
             {
                 "origin": "gradle/wrapper/gradle-wrapper.jar",
                 "branch": "refs/remotes/origin/master",
-                "checkName": "github.com/MrWong99/gitscanner/checks/binaryfile.SearchBinaries",
+                "checkName": "SearchBinaries",
                 "acknowledged": false,
                 "additionalInfo": {
                     "filemode": "0100644",
@@ -163,7 +166,7 @@ When started in server mode *gitscanner* will provide the following endpoints:
             {
                 "origin": "gradlew",
                 "branch": "refs/remotes/origin/master",
-                "checkName": "github.com/MrWong99/gitscanner/checks/unicode.SearchUnicode",
+                "checkName": "SearchIllegalUnicodeCharacters",
                 "acknowledged": false,
                 "additionalInfo": {
                     "character":"'\\u202a'",
@@ -182,7 +185,7 @@ When started in server mode *gitscanner* will provide the following endpoints:
 ]
 ```
 
-### GET /api/v1/checks - Retrieve the list of possible checks
+### GET /api/v1/checkDefinitions - Retrieve the list of possible checks
 
 **Status Codes:**
 
@@ -196,9 +199,9 @@ When started in server mode *gitscanner* will provide the following endpoints:
 
 ```json
 [
-    "github.com/MrWong99/gitscanner/checks/binaryfile.SearchBinaries",
-    "github.com/MrWong99/gitscanner/checks/unicode.SearchUnicode",
-    "github.com/MrWong99/gitscanner/checks/commitmeta.CheckCommitAuthor"
+    "SearchBinaries",
+    "SearchIllegalUnicodeCharacters",
+    "CheckCommitMetaInformation"
 ]
 ```
 
@@ -286,5 +289,40 @@ When started in server mode *gitscanner* will provide the following endpoints:
 {
     "username": "SecureMan",
     "password": "1n5EcuR3"
+}
+```
+
+### GET /api/v1/checks?from=<unix millis>&to=<unix millis>&checkNames=<stringArr> - Retrieve previously performed checks that are stored in DB
+
+**Status Codes:**
+
+* `200`: checks retrieved successfully
+* `500`: checks could not be read from DB
+
+**Query Parameters:**
+
+* `from`: milliseconds since 1970-01-01 as start date from which checks should be included.
+* `to`: milliseconds since 1970-01-01 as end date until which checks should be included.
+* `checkNames`: comma-separated list of check names to include in the results.
+
+**Response Body:**
+
+Same as in [/api/v1/checkRepos](#post-apiv1checkrepos---perform-checks-for-given-paths).
+
+### PUT api/v1/acknowledged/{checkID} - Set the acknowledged flag of given check
+
+**Path Params:**
+
+* `checkID`: the id of the check that should be set to acknowledged.
+
+**Request Body:**
+
+* `acknowledged`: boolean indecating wether this check was acknowledged or not.
+
+*Example:*
+
+```json
+{
+    "acknowledged": true
 }
 ```

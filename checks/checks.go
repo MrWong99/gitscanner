@@ -1,24 +1,60 @@
 package checks
 
 import (
+	"encoding/json"
 	"fmt"
-	"os"
+	"log"
 	"sync"
 	"time"
 
-	"github.com/MrWong99/gitscanner/checks/binaryfile"
-	"github.com/MrWong99/gitscanner/checks/commitmeta"
-	"github.com/MrWong99/gitscanner/checks/unicode"
 	mygit "github.com/MrWong99/gitscanner/git"
 	"github.com/MrWong99/gitscanner/utils"
+	"gorm.io/datatypes"
+	"gorm.io/gorm"
 )
 
-type RepoCheckFunc func(*mygit.ClonedRepo, chan<- utils.SingleCheck) error
+type CheckConfiguration struct {
+	ID        uint           `json:"-" gorm:"primarykey"`
+	Config    datatypes.JSON `json:"config"`
+	CreatedAt time.Time      `json:"-"`
+	UpdatedAt time.Time      `json:"-"`
+	DeletedAt gorm.DeletedAt `json:"-" gorm:"index"`
+}
 
-var RepoChecks = []RepoCheckFunc{
-	binaryfile.SearchBinaries,
-	unicode.SearchUnicode,
-	commitmeta.CheckCommitAuthor,
+func (config *CheckConfiguration) GetConfig() map[string]interface{} {
+	var result map[string]interface{}
+	json.Unmarshal(config.Config, &result)
+	return result
+}
+
+func (config *CheckConfiguration) SetConfig(c map[string]interface{}) error {
+	res, err := json.Marshal(c)
+	if err != nil {
+		return err
+	}
+	config.Config = res
+	return nil
+}
+
+type Checker interface {
+	fmt.Stringer
+	Check(*mygit.ClonedRepo, chan<- utils.SingleCheck) error
+}
+
+type Configurer interface {
+	GetConfig() *CheckConfiguration
+	SetConfig(*CheckConfiguration) error
+}
+
+type ConfigurableChecker interface {
+	Checker
+	Configurer
+}
+
+var RepoChecks []Checker
+
+func AddCheck(check Checker) {
+	RepoChecks = append(RepoChecks, check)
 }
 
 func CheckAllRepositories(repos []string) []*utils.CheckResultConsolidated {
@@ -38,19 +74,19 @@ func CheckAllRepositoriesSpecificChecks(repos, checks []string) []*utils.CheckRe
 	return results
 }
 
-func matchingChecks(checkNames []string) []RepoCheckFunc {
-	var res []RepoCheckFunc
+func matchingChecks(checkNames []string) []Checker {
+	var res []Checker
 	for _, name := range checkNames {
-		for _, fn := range RepoChecks {
-			if name == utils.FunctionName(fn) {
-				res = append(res, fn)
+		for _, check := range RepoChecks {
+			if name == check.String() {
+				res = append(res, check)
 			}
 		}
 	}
 	return res
 }
 
-func consolidateChecks(path string, checkFns []RepoCheckFunc) *utils.CheckResultConsolidated {
+func consolidateChecks(path string, checkFns []Checker) *utils.CheckResultConsolidated {
 	repo, err := mygit.CloneRepo(path)
 	if err != nil {
 		return &utils.CheckResultConsolidated{
@@ -61,12 +97,12 @@ func consolidateChecks(path string, checkFns []RepoCheckFunc) *utils.CheckResult
 	}
 	res := repositoryCheck(repo, checkFns)
 	if err := repo.Cleanup(); err != nil {
-		fmt.Fprintf(os.Stderr, "Error while cleaning up repo %s: %v", utils.RepoName(repo.Repo), err)
+		log.Printf("Error while cleaning up repo %s: %v", utils.RepoName(repo.Repo), err)
 	}
 	return res
 }
 
-func repositoryCheck(repo *mygit.ClonedRepo, checkFns []RepoCheckFunc) *utils.CheckResultConsolidated {
+func repositoryCheck(repo *mygit.ClonedRepo, checkFns []Checker) *utils.CheckResultConsolidated {
 	res := &utils.CheckResultConsolidated{
 		Date:       time.Now(),
 		Repository: utils.RepoName(repo.Repo),
@@ -76,10 +112,10 @@ func repositoryCheck(repo *mygit.ClonedRepo, checkFns []RepoCheckFunc) *utils.Ch
 	waitGroup.Add(len(checkFns))
 	for _, check := range checkFns {
 		checkChan := make(chan utils.SingleCheck)
-		go func(r *mygit.ClonedRepo, checkFn RepoCheckFunc, outputs chan<- utils.SingleCheck) {
-			err := checkFn(repo, checkChan)
+		go func(r *mygit.ClonedRepo, checker Checker, outputs chan<- utils.SingleCheck) {
+			err := checker.Check(repo, checkChan)
 			if err != nil {
-				fmt.Fprintf(os.Stderr, "Error while checking repository %s with function %s: %v\n", utils.RepoName(r.Repo), utils.FunctionName(checkFn), err)
+				log.Printf("Error while checking repository %s with function %s: %v\n", utils.RepoName(r.Repo), checker.String(), err)
 			}
 		}(repo, check, checkChan)
 		go awaitCheckResults(checkChan, res, waitGroup)

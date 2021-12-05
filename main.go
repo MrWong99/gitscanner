@@ -5,13 +5,18 @@ import (
 	"flag"
 	"fmt"
 	"io/ioutil"
+	"log"
 	"net/http"
 	"os"
-	"regexp"
 	"strconv"
 	"strings"
 
 	"github.com/MrWong99/gitscanner/checks"
+	"github.com/MrWong99/gitscanner/checks/binaryfile"
+	"github.com/MrWong99/gitscanner/checks/commitmeta"
+	"github.com/MrWong99/gitscanner/checks/unicode"
+	"github.com/MrWong99/gitscanner/db"
+	"github.com/MrWong99/gitscanner/db/configrepo"
 	mygit "github.com/MrWong99/gitscanner/git"
 	"github.com/MrWong99/gitscanner/rest"
 	"github.com/MrWong99/gitscanner/utils"
@@ -19,6 +24,7 @@ import (
 )
 
 func main() {
+	log.SetOutput(os.Stderr)
 	repositoryPaths := flag.String("repositories", "",
 		"A comma-separated list of repositories to perform checks against. Can be in these formats:\n"+
 			"- http(s)://<remote URL>\n- git@<remote URL>\n- file://<path>")
@@ -34,28 +40,11 @@ func main() {
 	sslCertFile := flag.String("ssl-certificate-chain-file", "", "An optional path to a TLS certificate (chain) in PEM format to enable HTTPS. Only used when port is set.")
 	flag.Parse()
 
-	var err error
-	var bPat *regexp.Regexp
-	var nPat *regexp.Regexp
-	var ePat *regexp.Regexp
-	if bPat, err = utils.ExtractPattern(*branchPattern); err != nil {
-		fmt.Printf("Error with given pattern %s: %v", *branchPattern, err)
-		os.Exit(1)
-	}
-	if nPat, err = utils.ExtractPattern(*namePattern); err != nil {
-		fmt.Printf("Error with given pattern %s: %v", *namePattern, err)
-		os.Exit(1)
-	}
-	if ePat, err = utils.ExtractPattern(*emailPattern); err != nil {
-		fmt.Printf("Error with given pattern %s: %v", *emailPattern, err)
-		os.Exit(1)
-	}
+	saveConfigToDB(branchPattern, namePattern, emailPattern)
 
-	utils.InitConfig(&utils.GlobalConfig{
-		BranchPattern: bPat,
-		NamePattern:   nPat,
-		EmailPattern:  ePat,
-	})
+	checks.AddCheck(&binaryfile.BinarySearchCheck{})
+	checks.AddCheck(&commitmeta.CommitMetaInfoCheck{})
+	checks.AddCheck(&unicode.UnicodeCharacterSearch{})
 
 	if *repositoryPaths == "" && *port < 1 {
 		fmt.Println("No repositories defined!")
@@ -68,14 +57,14 @@ func main() {
 	if *privateKeyFile != "" {
 		_, err := os.Stat(*privateKeyFile)
 		if err != nil {
-			fmt.Fprintf(os.Stderr, "Private key file %s could not be opened: %v", *privateKeyFile, err)
+			log.Printf("Private key file %s could not be opened: %v\n", *privateKeyFile, err)
 		} else {
 			content, err := ioutil.ReadFile(*privateKeyFile)
 			if err != nil {
-				fmt.Fprintf(os.Stderr, "Private key file %s could not be opened: %v", *privateKeyFile, err)
+				log.Printf("Private key file %s could not be opened: %v\n", *privateKeyFile, err)
 			} else {
 				if err = mygit.InitSshKey(content, *keyPassword); err != nil {
-					fmt.Fprintf(os.Stderr, "Private key file %s could not be opened: %v", *privateKeyFile, err)
+					log.Printf("Private key file %s could not be opened: %v\n", *privateKeyFile, err)
 				}
 			}
 		}
@@ -86,14 +75,14 @@ func main() {
 		rest.InitRouter(router)
 		var err error
 		if *sslKeyFile != "" && *sslCertFile != "" {
-			fmt.Printf("Starting webserver. Navigate to https://localhost:%d in your browser!", *port)
+			fmt.Printf("Starting webserver. Navigate to https://localhost:%d in your browser!\n", *port)
 			err = http.ListenAndServeTLS(":"+strconv.Itoa(*port), *sslCertFile, *sslKeyFile, router)
 		} else {
-			fmt.Printf("Starting webserver. Navigate to http://localhost:%d in your browser!", *port)
+			fmt.Printf("Starting webserver. Navigate to http://localhost:%d in your browser!\n", *port)
 			err = http.ListenAndServe(":"+strconv.Itoa(*port), router)
 		}
 		if err != nil {
-			fmt.Fprintf(os.Stderr, "%v\n", err)
+			log.Printf("%v\n", err)
 		}
 	} else {
 		allPaths := strings.Split(*repositoryPaths, ",")
@@ -102,10 +91,62 @@ func main() {
 		if err == nil {
 			fmt.Printf("%s\n\n", jsonStr)
 		} else {
-			fmt.Fprintf(os.Stderr, "JSON failed '%v'\n", err)
+			log.Printf("JSON failed '%v'\n", err)
 			for _, v := range res {
 				fmt.Printf("%v\n\n", *v)
 			}
 		}
+	}
+}
+
+func saveConfigToDB(branchPattern, namePattern, emailPattern *string) {
+	var err error
+
+	err = db.InitDb()
+	if err != nil {
+		log.Printf("Error while initializing database: %v\n", err)
+		os.Exit(1)
+	}
+
+	if _, err = utils.ExtractPattern(*branchPattern); err != nil {
+		fmt.Printf("Error with given pattern %s: %v\n", *branchPattern, err)
+		os.Exit(1)
+	}
+	if _, err = utils.ExtractPattern(*namePattern); err != nil {
+		fmt.Printf("Error with given pattern %s: %v\n", *namePattern, err)
+		os.Exit(1)
+	}
+	if _, err = utils.ExtractPattern(*emailPattern); err != nil {
+		fmt.Printf("Error with given pattern %s: %v\n", *emailPattern, err)
+		os.Exit(1)
+	}
+
+	var currentCfg *utils.GlobalConfig
+
+	currentCfg, err = configrepo.ReadConfig()
+	if err != nil {
+		log.Printf("Error while reading config from database: %v\n", err)
+	}
+	if currentCfg == nil {
+		currentCfg = &utils.GlobalConfig{
+			BranchPattern: *branchPattern,
+			NamePattern:   *namePattern,
+			EmailPattern:  *emailPattern,
+		}
+	} else {
+		if *branchPattern != "" {
+			currentCfg.BranchPattern = *branchPattern
+		}
+		if *namePattern != "" {
+			currentCfg.NamePattern = *namePattern
+		}
+		if *emailPattern != "" {
+			currentCfg.EmailPattern = *emailPattern
+		}
+	}
+	err = configrepo.UpdateConfig(currentCfg)
+	if err != nil {
+		log.Printf("Error while updating config in database: %v\n", err)
+		os.Exit(1)
 	}
 }

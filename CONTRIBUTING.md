@@ -19,6 +19,9 @@ $ git remote add <FORK_NAME> <FORK_URL>
 
 Notice: `go get` return `package github.com/MrWong99/gitscanner: no Go files in /go/src/github.com/MrWong99/gitscanner` is normal.
 
+Also you need to be able to use `gcc` or `g++` in your cli. So if you are using Windows consider using `Mingw`, `Cygwin` or a Unix VM (e.g. using `WSL 2`)
+to build the software.
+
 ### Dependency management
 
 We use [Go modules](https://golang.org/cmd/go/#hdr-Modules__module_versions__and_more) to manage dependencies on external packages.

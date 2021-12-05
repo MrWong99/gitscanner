@@ -8,39 +8,47 @@ import (
 	"time"
 
 	"github.com/go-git/go-git/v5"
+	"gorm.io/datatypes"
+	"gorm.io/gorm"
 )
 
-var config *GlobalConfig
-
 type GlobalConfig struct {
-	BranchPattern *regexp.Regexp
-	NamePattern   *regexp.Regexp
-	EmailPattern  *regexp.Regexp
+	ID            uint           `json:"-" gorm:"primarykey"`
+	BranchPattern string         `json:"branchPattern"`
+	NamePattern   string         `json:"namePattern"`
+	EmailPattern  string         `json:"emailPattern"`
+	CreatedAt     time.Time      `json:"-"`
+	UpdatedAt     time.Time      `json:"-"`
+	DeletedAt     gorm.DeletedAt `json:"-" gorm:"index"`
 }
 
 type SingleCheck struct {
-	Origin         string                 `json:"origin"`
-	Branch         string                 `json:"branch"`
-	CheckName      string                 `json:"checkName"`
-	Acknowledged   bool                   `json:"acknowledged"`
-	AdditionalInfo map[string]interface{} `json:"additionalInfo"`
+	ID                        uint           `json:"id" gorm:"primarykey"`
+	Origin                    string         `json:"origin"`
+	Branch                    string         `json:"branch"`
+	CheckName                 string         `json:"checkName"`
+	Acknowledged              bool           `json:"acknowledged"`
+	AdditionalInfo            datatypes.JSON `json:"additionalInfo"`
+	CheckResultConsolidatedID uint           `json:"-"`
+	CreatedAt                 time.Time      `json:"-"`
+	UpdatedAt                 time.Time      `json:"-"`
+	DeletedAt                 gorm.DeletedAt `json:"-" gorm:"index"`
 }
 
 type CheckResultConsolidated struct {
-	Date       time.Time     `json:"date"`
-	Repository string        `json:"repository"`
-	Error      string        `json:"error"`
-	Checks     []SingleCheck `json:"checks"`
+	ID         uint           `json:"id" gorm:"primarykey"`
+	Date       time.Time      `json:"date"`
+	Repository string         `json:"repository"`
+	Error      string         `json:"error"`
+	Checks     []SingleCheck  `json:"checks" gorm:"foreignKey:CheckResultConsolidatedID"`
+	CreatedAt  time.Time      `json:"-"`
+	UpdatedAt  time.Time      `json:"-"`
+	DeletedAt  gorm.DeletedAt `json:"-" gorm:"index"`
 }
 
 type SearchRequestBody struct {
 	Path       string   `json:"path"`
 	CheckNames []string `json:"checkNames"`
-}
-
-// Initialize the global configuration with given config.
-func InitConfig(cfg *GlobalConfig) {
-	config = cfg
 }
 
 // Returns the name and package/module path of the given function.
@@ -59,11 +67,6 @@ func RepoName(repo *git.Repository) string {
 		}
 	}
 	return "Unknown Repo"
-}
-
-// Retrieve the global configuration.
-func Config() GlobalConfig {
-	return *config
 }
 
 func ByteCountDecimal(b int64) string {

@@ -1,18 +1,21 @@
 package unicode
 
 import (
-	"fmt"
+	"errors"
 	"io/ioutil"
-	"os"
+	"log"
+	"regexp"
 	"strconv"
 	"strings"
 	"sync"
 	"unicode/utf8"
 
+	"github.com/MrWong99/gitscanner/checks"
 	mygit "github.com/MrWong99/gitscanner/git"
 	"github.com/MrWong99/gitscanner/utils"
 	"github.com/go-git/go-git/v5/plumbing"
 	"github.com/go-git/go-git/v5/plumbing/object"
+	"gorm.io/datatypes"
 )
 
 var illegalUnicodeChars = []rune{
@@ -27,7 +30,50 @@ var illegalUnicodeChars = []rune{
 	'\u202c',
 }
 
-func SearchUnicode(wrapRepo *mygit.ClonedRepo, output chan<- utils.SingleCheck) error {
+type UnicodeCharacterSearch struct {
+	cfg checks.CheckConfiguration
+}
+
+func (*UnicodeCharacterSearch) String() string {
+	return "SearchIllegalUnicodeCharacters"
+}
+
+func (bins *UnicodeCharacterSearch) GetConfig() *checks.CheckConfiguration {
+	return &bins.cfg
+}
+
+func (bins *UnicodeCharacterSearch) SetConfig(c *checks.CheckConfiguration) error {
+	cfg := c.GetConfig()
+	pat, ok := cfg["branchPattern"]
+	if !ok {
+		return errors.New("Given configuration for '" + bins.String() + "' did not contain mandatory config 'branchPattern'!")
+	}
+	switch strPat := pat.(type) {
+	case string:
+		if _, err := utils.ExtractPattern(strPat); err != nil {
+			return err
+		}
+		bins.cfg = *c
+	default:
+		return errors.New("Given configuration for '" + bins.String() + "' didn't have a string as 'branchPattern'!")
+	}
+	return nil
+}
+
+func (bins *UnicodeCharacterSearch) getPat() *regexp.Regexp {
+	pat, ok := bins.cfg.GetConfig()["branchPattern"]
+	if !ok {
+		return regexp.MustCompile(".*")
+	}
+	switch strPat := pat.(type) {
+	case string:
+		return regexp.MustCompile(strPat)
+	default:
+		return regexp.MustCompile(".*")
+	}
+}
+
+func (check *UnicodeCharacterSearch) Check(wrapRepo *mygit.ClonedRepo, output chan<- utils.SingleCheck) error {
 	defer close(output)
 	repo := wrapRepo.Repo
 	branchIt, err := repo.References()
@@ -36,7 +82,7 @@ func SearchUnicode(wrapRepo *mygit.ClonedRepo, output chan<- utils.SingleCheck) 
 	}
 	wg := new(sync.WaitGroup)
 	err = branchIt.ForEach(func(branchRef *plumbing.Reference) error {
-		if !(branchRef.Name().IsBranch() || branchRef.Name().IsRemote()) || !utils.Config().BranchPattern.MatchString(branchRef.Name().String()) {
+		if !(branchRef.Name().IsBranch() || branchRef.Name().IsRemote()) || !check.getPat().MatchString(branchRef.Name().String()) {
 			return nil
 		}
 		commit, err := repo.CommitObject(branchRef.Hash())
@@ -50,7 +96,7 @@ func SearchUnicode(wrapRepo *mygit.ClonedRepo, output chan<- utils.SingleCheck) 
 		wg.Add(1)
 		go func(t *object.Tree) {
 			defer wg.Done()
-			searchForIllegal(t, wrapRepo, branchRef, output)
+			check.searchForIllegal(t, wrapRepo, branchRef, output)
 		}(tree)
 		return nil
 	})
@@ -58,17 +104,23 @@ func SearchUnicode(wrapRepo *mygit.ClonedRepo, output chan<- utils.SingleCheck) 
 	return err
 }
 
-func searchForIllegal(t *object.Tree, repo *mygit.ClonedRepo, branchRef *plumbing.Reference, output chan<- utils.SingleCheck) {
+func getAdditionalInfo(f *object.File, illegalChar rune) datatypes.JSON {
+	return datatypes.JSON([]byte(`{"filesize": "` + utils.ByteCountDecimal(f.Size) +
+		`", "filemode": "` + f.Mode.String() +
+		`", "character": "` + strconv.QuoteRuneToASCII(illegalChar) + `"}`))
+}
+
+func (check *UnicodeCharacterSearch) searchForIllegal(t *object.Tree, repo *mygit.ClonedRepo, branchRef *plumbing.Reference, output chan<- utils.SingleCheck) {
 	t.Files().ForEach(func(f *object.File) error {
 		reader, err := f.Reader()
 		if err != nil {
-			fmt.Fprintf(os.Stderr, "Could not open file %s in repo %s with branch %s\n", f.Name, utils.RepoName(repo.Repo), branchRef.Name())
+			log.Printf("Could not open file %s in repo %s with branch %s\n", f.Name, utils.RepoName(repo.Repo), branchRef.Name())
 			return err
 		}
 		defer reader.Close()
 		content, err := ioutil.ReadAll(reader)
 		if err != nil {
-			fmt.Fprintf(os.Stderr, "Could not open file %s in repo %s with branch %s\n", f.Name, utils.RepoName(repo.Repo), branchRef.Name())
+			log.Printf("Could not open file %s in repo %s with branch %s\n", f.Name, utils.RepoName(repo.Repo), branchRef.Name())
 			return err
 		}
 		if !utf8.Valid(content) {
@@ -77,14 +129,10 @@ func searchForIllegal(t *object.Tree, repo *mygit.ClonedRepo, branchRef *plumbin
 		for _, illegalRune := range illegalUnicodeChars {
 			if strings.ContainsRune(string(content), illegalRune) {
 				output <- utils.SingleCheck{
-					Origin:    f.Name,
-					Branch:    branchRef.Name().String(),
-					CheckName: utils.FunctionName(SearchUnicode),
-					AdditionalInfo: map[string]interface{}{
-						"character": strconv.QuoteRuneToASCII(illegalRune),
-						"filesize":  utils.ByteCountDecimal(f.Size),
-						"filemode":  f.Mode.String(),
-					},
+					Origin:         f.Name,
+					Branch:         branchRef.Name().String(),
+					CheckName:      check.String(),
+					AdditionalInfo: getAdditionalInfo(f, illegalRune),
 				}
 			}
 		}
