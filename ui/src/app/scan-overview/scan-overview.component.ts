@@ -12,10 +12,40 @@ export class ScanOverviewComponent implements OnInit {
   @Input() data: any;
   @Input() checkName: any;
   errors: Error[] = [{repository: 'gus', error: 'you suck'}];
+  checks: any[] = [];
+  flattenedData: any[] = [];
 
   constructor() { }
 
-  ngOnInit(): void {    
+  ngOnInit(): void { 
+    let result: any[] = [];
+    this.data.forEach((f1: any) => {
+      f1["checks"].forEach((check: any) => {
+          let sahne = this.mapCheck(check)
+          Object.keys(f1).forEach(ku => {
+              if (ku != "checks") {
+                  sahne[ku] = f1[ku];
+              }
+          })
+          result.push(sahne);
+      })
+    });  
+    console.log(result);
+    this.flattenedData = Object.assign([], result);
+  }
+
+  mapCheck(gus: any): any {
+      let newObj: any = {}
+      Object.keys(gus).forEach((key1: any) => {
+          if (key1 == "additionalInfo") {
+              Object.keys(gus[key1]).forEach((key2: any) => {
+                newObj[key2] = gus[key1][key2];
+              });
+          } else {
+            newObj[key1] = gus[key1];
+          }
+      })
+      return newObj;
   }
 
   isBinariesSearch() {
