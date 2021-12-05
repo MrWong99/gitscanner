@@ -1,6 +1,7 @@
 package main
 
 import (
+	"embed"
 	"encoding/json"
 	"flag"
 	"fmt"
@@ -22,6 +23,9 @@ import (
 	"github.com/MrWong99/gitscanner/utils"
 	"github.com/gorilla/mux"
 )
+
+//go:embed ui/dist/search-binary
+var embedUi embed.FS
 
 func main() {
 	log.SetOutput(os.Stderr)
@@ -73,6 +77,7 @@ func main() {
 	if *port > 0 {
 		router := mux.NewRouter().StrictSlash(true)
 		rest.InitRouter(router)
+		router.Handle("/", http.FileServer(http.FS(embedUi)))
 		var err error
 		if *sslKeyFile != "" && *sslCertFile != "" {
 			fmt.Printf("Starting webserver. Navigate to https://localhost:%d in your browser!\n", *port)
