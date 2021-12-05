@@ -24,6 +24,7 @@ jobs:
     
     - name: Build ui
       run: |
+        cd ui
         npm install
         npm run build
 
