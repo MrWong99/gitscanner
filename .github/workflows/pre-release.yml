@@ -16,6 +16,17 @@ jobs:
       with:
         go-version: 1.17
 
+    - name: Setup Node
+      uses: actions/setup-node@v1
+      with:
+        node-version: 17
+        registry-url: https://registry.npmjs.org/
+    
+    - name: Build ui
+      run: |
+        npm install
+        npm run build
+
     - name: Build Linux
       run: GOOS=linux go build -o gitscanner -v .
 
