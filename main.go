@@ -4,7 +4,7 @@ import (
 	"embed"
 	"encoding/json"
 	"flag"
-	"fmt"
+	"io/fs"
 	"io/ioutil"
 	"log"
 	"net/http"
@@ -24,7 +24,7 @@ import (
 	"github.com/gorilla/mux"
 )
 
-//go:embed ui/dist/search-binary
+//go:embed ui/dist/search-binary/*
 var embedUi embed.FS
 
 func main() {
@@ -51,7 +51,7 @@ func main() {
 	checks.AddCheck(&unicode.UnicodeCharacterSearch{})
 
 	if *repositoryPaths == "" && *port < 1 {
-		fmt.Println("No repositories defined!")
+		log.Println("No repositories defined!")
 		os.Exit(1)
 	}
 
@@ -75,15 +75,19 @@ func main() {
 	}
 
 	if *port > 0 {
-		router := mux.NewRouter().StrictSlash(true)
+		log.SetOutput(os.Stdout)
+		router := mux.NewRouter()
 		rest.InitRouter(router)
-		router.Handle("/", http.FileServer(http.FS(embedUi)))
-		var err error
+		files, err := fs.Sub(embedUi, "ui/dist/search-binary")
+		if err != nil {
+			panic(err)
+		}
+		router.PathPrefix("/").Handler(http.FileServer(http.FS(files)))
 		if *sslKeyFile != "" && *sslCertFile != "" {
-			fmt.Printf("Starting webserver. Navigate to https://localhost:%d in your browser!\n", *port)
+			log.Printf("Starting webserver. Navigate to https://localhost:%d in your browser!\n", *port)
 			err = http.ListenAndServeTLS(":"+strconv.Itoa(*port), *sslCertFile, *sslKeyFile, router)
 		} else {
-			fmt.Printf("Starting webserver. Navigate to http://localhost:%d in your browser!\n", *port)
+			log.Printf("Starting webserver. Navigate to http://localhost:%d in your browser!\n", *port)
 			err = http.ListenAndServe(":"+strconv.Itoa(*port), router)
 		}
 		if err != nil {
@@ -94,11 +98,11 @@ func main() {
 		res := checks.CheckAllRepositories(allPaths)
 		jsonStr, err := json.Marshal(res)
 		if err == nil {
-			fmt.Printf("%s\n\n", jsonStr)
+			log.Printf("%s\n\n", jsonStr)
 		} else {
 			log.Printf("JSON failed '%v'\n", err)
 			for _, v := range res {
-				fmt.Printf("%v\n\n", *v)
+				log.Printf("%v\n\n", *v)
 			}
 		}
 	}
@@ -114,15 +118,15 @@ func saveConfigToDB(branchPattern, namePattern, emailPattern *string) {
 	}
 
 	if _, err = utils.ExtractPattern(*branchPattern); err != nil {
-		fmt.Printf("Error with given pattern %s: %v\n", *branchPattern, err)
+		log.Printf("Error with given pattern %s: %v\n", *branchPattern, err)
 		os.Exit(1)
 	}
 	if _, err = utils.ExtractPattern(*namePattern); err != nil {
-		fmt.Printf("Error with given pattern %s: %v\n", *namePattern, err)
+		log.Printf("Error with given pattern %s: %v\n", *namePattern, err)
 		os.Exit(1)
 	}
 	if _, err = utils.ExtractPattern(*emailPattern); err != nil {
-		fmt.Printf("Error with given pattern %s: %v\n", *emailPattern, err)
+		log.Printf("Error with given pattern %s: %v\n", *emailPattern, err)
 		os.Exit(1)
 	}
 
