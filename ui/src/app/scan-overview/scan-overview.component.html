@@ -40,11 +40,7 @@
                         <th *ngIf="isBinariesSearch() || isUnicodeSearch() || isBigFileSearch()" pSortableColumn="filemode">File Mode <p-sortIcon field="filemode"></p-sortIcon></th>
                         <th *ngIf="isBinariesSearch() || isUnicodeSearch() || isBigFileSearch()" pSortableColumn="filesize">File Size <p-sortIcon field="filesize"></p-sortIcon></th>
                         <th *ngIf="isCommitSearch()" pSortableColumn="numberOfParents">Number of Parents <p-sortIcon field="numberOfParents"></p-sortIcon></th>
-                        <th pSortableColumn="acknowledged">
-                            <span>Acknowledged <i class="fa fa-info-circle info-icon" aria-hidden="true"
-                                pTooltip="Mark check as acknowledged."></i>
-                            </span> <p-sortIcon field="acknowledged"></p-sortIcon>
-                        </th>
+                        <th pSortableColumn="acknowledged">Acknowledged <p-sortIcon field="acknowledged"></p-sortIcon></th>
                     </tr>
                 </ng-template>
                 <ng-template pTemplate="body" let-data>

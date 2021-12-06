@@ -37,6 +37,9 @@ export class AppComponent implements OnInit, OnDestroy {
   ngOnInit() {
   }
 
+  /**
+   * Open the scan config dialog.
+   */
   openConfigDialog() {
     this.fileData = [];
     this.selectedCheckNames = [];
@@ -46,10 +49,16 @@ export class AppComponent implements OnInit, OnDestroy {
     this.scanForm?.form.markAsPristine();
   }
 
+  /**
+   * Empty the input field placeholder once in focus.
+   */
   emptyPlaceholder() {
     this.placeholder = '';
   }
 
+  /**
+   * Submit the scan config and perform scan.
+   */
   submit() {
     let selected: string[] = [];
     this.selectedCheckNames.forEach((entry) => {
@@ -70,9 +79,7 @@ export class AppComponent implements OnInit, OnDestroy {
     this.scanInProgress = true;
   }
 
-
-
-  ngOnDestroy(): void {
+  ngOnDestroy() {
     this.getDataSubscription?.unsubscribe();
   }
 }

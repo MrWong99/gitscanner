@@ -24,6 +24,7 @@ export class ScanOverviewComponent implements OnChanges, OnDestroy {
   }
 
   ngOnChanges() {
+    // flatten the nested data object retrieved from the parent/backend
     let result: any[] = [];
     this.data.forEach((repoCheck: any) => {
       if (repoCheck['checks']) {
@@ -42,6 +43,11 @@ export class ScanOverviewComponent implements OnChanges, OnDestroy {
     this.listErrors();
   }
 
+  /**
+   * Flatten a given check object.
+   * @param check the check
+   * @returns a flattened object
+   */
   mapCheck(check: any): any {
       let flattenedObj: any = {}
       Object.keys(check).forEach((key1: any) => {
@@ -56,27 +62,41 @@ export class ScanOverviewComponent implements OnChanges, OnDestroy {
       return flattenedObj;
   }
 
-  isBinariesSearch() {
+  /**
+   * Check if is a binary search check.
+   * @returns true/false
+   */
+  isBinariesSearch(): boolean {
     return this.checkName.includes('SearchBinaries');
   }
 
-  isUnicodeSearch() {
+   /**
+   * Check if is unicode check.
+   * @returns true/false
+   */
+  isUnicodeSearch(): boolean {
     return this.checkName.includes('SearchUnicode');
   }
 
-  isCommitSearch() {
+   /**
+   * Check if is commit author check.
+   * @returns true/false
+   */
+  isCommitSearch(): boolean {
     return this.checkName.includes('CheckCommitAuthor');
   }
 
-  isBigFileSearch() {
+   /**
+   * Check if is big files check.
+   * @returns true/false
+   */
+  isBigFileSearch(): boolean {
     return this.checkName.includes('SearchBigFiles');
   }
 
-  getCheckName(checkNamePath: string): string {
-    checkNamePath.slice(checkNamePath.lastIndexOf('.') + 1);
-    return checkNamePath;
-  }
-
+  /**
+   * List any errors that occured during the scan.
+   */
   listErrors() {
     this.errors = [];
     this.data.forEach((entry: FileData) => {
@@ -86,6 +106,11 @@ export class ScanOverviewComponent implements OnChanges, OnDestroy {
     });
   }
 
+  /**
+   * Update the acknowledged status for the selected check.
+   * @param id the check id
+   * @param isAcknowledged true/false
+   */
   updateAcknowledgedStatus(id: number, isAcknowledged: boolean) {
     this.updateAcknowledgedStatusSub = this.searchBinaryService.updateAcknowledgedStatus(id, isAcknowledged).subscribe(data => {
      },
