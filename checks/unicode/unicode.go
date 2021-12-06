@@ -91,7 +91,7 @@ func (check *UnicodeCharacterSearch) Check(wrapRepo *mygit.ClonedRepo, output ch
 		}
 		tree, err := commit.Tree()
 		if err != nil {
-			return err
+			return nil
 		}
 		wg.Add(1)
 		go func(t *object.Tree) {
@@ -115,13 +115,13 @@ func (check *UnicodeCharacterSearch) searchForIllegal(t *object.Tree, repo *mygi
 		reader, err := f.Reader()
 		if err != nil {
 			log.Printf("Could not open file %s in repo %s with branch %s\n", f.Name, utils.RepoName(repo.Repo), branchRef.Name())
-			return err
+			return nil
 		}
 		defer reader.Close()
 		content, err := ioutil.ReadAll(reader)
 		if err != nil {
 			log.Printf("Could not open file %s in repo %s with branch %s\n", f.Name, utils.RepoName(repo.Repo), branchRef.Name())
-			return err
+			return nil
 		}
 		if !utf8.Valid(content) {
 			return nil
