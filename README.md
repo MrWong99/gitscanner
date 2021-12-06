@@ -43,9 +43,10 @@ Usage of ./gitscanner:
 
 ## Performed checks
 
-* **[SearchBinaries](/checks/binaryfile/binaryfile.go):** Searches for any binary files on each branch (local or remote) that matches the `-branch-pattern`.
-* **[SearchIllegalUnicodeCharacters](/checks/unicode/unicode.go):** Searches for specific unicode characters in each file on each branch (local or remote) that matches the `-branch-pattern`. See [trojan-source.pdf](https://trojansource.codes/trojan-source.pdf).
-* **[CheckCommitMetaInformation](/checks/commitmeta/commitmeta.go):** Checks every commits author and committer name and email for expected match against `-email-pattern` and `-name-pattern`.
+* **[SearchBinaries](/checks/binaryfile/binaryfile.go):** Searches for any binary files on each branch (local or remote) that matches the `branchPattern`.
+* **[SearchIllegalUnicodeCharacters](/checks/unicode/unicode.go):** Searches for specific unicode characters in each file on each branch (local or remote) that matches the `branchPattern`. See [trojan-source.pdf](https://trojansource.codes/trojan-source.pdf).
+* **[CheckCommitMetaInformation](/checks/commitmeta/commitmeta.go):** Checks every commits author and committer name and email for expected match against `emailPattern` and `namePattern`.
+* **[SearchBigFiles](/checks/filesize/filesize.go):** Searches for files on each branch (local or remote) that matches the `branchPattern` and is bigger than `filesizeThresholdByte`.
   
 ## Build locally
 
@@ -102,7 +103,8 @@ When started in server mode *gitscanner* will provide the following endpoints:
   "checkNames": [
     "SearchBinaries",
     "CheckCommitMetaInformation",
-    "SearchIllegalUnicodeCharacters"
+    "SearchIllegalUnicodeCharacters",
+    "SearchBigFiles"
   ]
 }
 ```
@@ -144,13 +146,13 @@ When started in server mode *gitscanner* will provide the following endpoints:
                 }
             },
             {
-                "origin": "app/src/main/res/mipmap-xxhdpi/ic_wishlist_round.png",
+                "origin": "gradle/wrapper/gradle-wrapper.jar",
                 "branch": "refs/remotes/origin/master",
-                "checkName": "SearchBinaries",
+                "checkName": "SearchBigFiles",
                 "acknowledged": false,
                 "additionalInfo": {
                     "filemode": "0100644",
-                    "filesize": "9.5 kB"
+                    "filesize": "54.3 kB"
                 }
             },
             {
@@ -201,7 +203,8 @@ When started in server mode *gitscanner* will provide the following endpoints:
 [
     "SearchBinaries",
     "SearchIllegalUnicodeCharacters",
-    "CheckCommitMetaInformation"
+    "CheckCommitMetaInformation",
+    "SearchBigFiles"
 ]
 ```
 

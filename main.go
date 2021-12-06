@@ -15,6 +15,7 @@ import (
 	"github.com/MrWong99/gitscanner/checks"
 	"github.com/MrWong99/gitscanner/checks/binaryfile"
 	"github.com/MrWong99/gitscanner/checks/commitmeta"
+	"github.com/MrWong99/gitscanner/checks/filesize"
 	"github.com/MrWong99/gitscanner/checks/unicode"
 	"github.com/MrWong99/gitscanner/db"
 	"github.com/MrWong99/gitscanner/db/configrepo"
@@ -49,6 +50,7 @@ func main() {
 	checks.AddCheck(&binaryfile.BinarySearchCheck{})
 	checks.AddCheck(&commitmeta.CommitMetaInfoCheck{})
 	checks.AddCheck(&unicode.UnicodeCharacterSearch{})
+	checks.AddCheck(&filesize.FilesizeSearchCheck{})
 
 	if *repositoryPaths == "" && *port < 1 {
 		log.Println("No repositories defined!")
