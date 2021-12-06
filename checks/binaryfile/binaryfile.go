@@ -72,7 +72,7 @@ func (check *BinarySearchCheck) Check(wrapRepo *mygit.ClonedRepo, output chan<- 
 		}
 		tree, err := commit.Tree()
 		if err != nil {
-			return err
+			return nil
 		}
 		tree.Files().ForEach(func(f *object.File) error {
 			if isBin, err := f.IsBinary(); err == nil && isBin {

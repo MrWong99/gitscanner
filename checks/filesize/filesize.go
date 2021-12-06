@@ -102,7 +102,7 @@ func (check *FilesizeSearchCheck) Check(wrapRepo *mygit.ClonedRepo, output chan<
 		}
 		tree, err := commit.Tree()
 		if err != nil {
-			return err
+			return nil
 		}
 		tree.Files().ForEach(func(f *object.File) error {
 			if f.Size >= check.getThreshold() {
