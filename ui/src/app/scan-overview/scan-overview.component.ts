@@ -1,5 +1,7 @@
-import { Component, OnInit, Input } from '@angular/core';
-import { FileData, Error } from '../search-binary.service';
+import { Component, OnChanges, Input, OnDestroy } from '@angular/core';
+import { Subscription } from 'rxjs';
+import { MessageService } from 'primeng/api';
+import { SearchBinaryService, FileData, Error } from '../search-binary.service';
 
 @Component({
   selector: 'app-scan-overview',
@@ -7,45 +9,51 @@ import { FileData, Error } from '../search-binary.service';
   styleUrls: ['./scan-overview.component.scss']
 })
 
-export class ScanOverviewComponent implements OnInit {
+export class ScanOverviewComponent implements OnChanges, OnDestroy {
 
   @Input() data: any;
   @Input() checkName: any;
-  errors: Error[] = [{repository: 'gus', error: 'you suck'}];
+  errors: Error[] = [];
   checks: any[] = [];
   flattenedData: any[] = [];
+  updateAcknowledgedStatusSub: Subscription | undefined;
 
-  constructor() { }
-
-  ngOnInit(): void {
-    let result: any[] = [];
-    this.data.forEach((f1: any) => {
-      f1["checks"].forEach((check: any) => {
-          let sahne = this.mapCheck(check)
-          Object.keys(f1).forEach(ku => {
-              if (ku != "checks") {
-                  sahne[ku] = f1[ku];
-              }
-          })
-          result.push(sahne);
-      })
-    });
-    console.log(result);
-    this.flattenedData = Object.assign([], result);
+  constructor(
+    private messageService: MessageService,
+    private searchBinaryService: SearchBinaryService) {
   }
 
-  mapCheck(gus: any): any {
-      let newObj: any = {}
-      Object.keys(gus).forEach((key1: any) => {
-          if (key1 == "additionalInfo") {
-              Object.keys(gus[key1]).forEach((key2: any) => {
-                newObj[key2] = gus[key1][key2];
+  ngOnChanges() {
+    let result: any[] = [];
+    this.data.forEach((repoCheck: any) => {
+      if (repoCheck['checks']) {
+        repoCheck['checks'].forEach((check: any) => {
+            let flattenedCheck = this.mapCheck(check)
+            Object.keys(repoCheck).forEach(k => {
+                if (k != 'checks' && k != 'id') {
+                  flattenedCheck[k] = repoCheck[k];
+                }
+            })
+            result.push(flattenedCheck);
+        });
+      }
+    });
+    this.flattenedData = Object.assign([], result);
+    this.listErrors();
+  }
+
+  mapCheck(check: any): any {
+      let flattenedObj: any = {}
+      Object.keys(check).forEach((key1: any) => {
+          if (key1 == 'additionalInfo') {
+              Object.keys(check[key1]).forEach((key2: any) => {
+                flattenedObj[key2] = check[key1][key2];
               });
           } else {
-            newObj[key1] = gus[key1];
+            flattenedObj[key1] = check[key1];
           }
       })
-      return newObj;
+      return flattenedObj;
   }
 
   isBinariesSearch() {
@@ -70,11 +78,24 @@ export class ScanOverviewComponent implements OnInit {
   }
 
   listErrors() {
-    this.data.array.forEach((entry: FileData) => {
+    this.errors = [];
+    this.data.forEach((entry: FileData) => {
       if (entry.error && entry.repository && entry.error !== '') {
         this.errors.push({repository: entry.repository, error: entry.error})
       }
     });
+  }
+
+  updateAcknowledgedStatus(id: number, isAcknowledged: boolean) {
+    this.updateAcknowledgedStatusSub = this.searchBinaryService.updateAcknowledgedStatus(id, isAcknowledged).subscribe(data => {
+     },
+     error => {
+      this.messageService.add({key: 'acknowledgedError', severity:'error', summary:'Error updating acknowledged status', detail: error.statusText});
+     });
+  }
+
+  ngOnDestroy() {
+    this.updateAcknowledgedStatusSub?.unsubscribe();
   }
 
 }

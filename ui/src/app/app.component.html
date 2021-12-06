@@ -1,44 +1,55 @@
-<h1>Scan GitLab Repository</h1>
-<div class="info-text">
+<h1>Scan GitLab Repositories</h1>
+<!--<div class="info-text">
   <label>Make a configuration to scan files in one or more GitLab repositories (local or via GitLab url).
     The path/urls must be separated by commas,
     e.g. "https://github.com/grafana/loki,git@github.com/UserX/gitscanner.git,file://C:\Users\UserX\myRepo,file:///opt/kisters/repo".
   </label>
-</div>
+</div>-->
 <div class="field col-6">
-  <p-button label="Configure scan output" (onClick)="openConfigDialog()"></p-button>
+  <p-button label="Configure scan" (onClick)="openConfigDialog()"></p-button>
 </div>
-<p-dialog header="Configure file scan" [(visible)]="display">
+<p-dialog header="Configure scan" [(visible)]="display">
   <form #scanForm="ngForm">
-    <div class="fluid formgrid grid"> 
-      <div class="field col-12">
-        <label class="label-style">Specify path(s) / url(s) to scan:</label>
-        <div class="field">      
+    <div class="fluid formgrid grid">
+      <div class="col-12">
+        <div class="div-style">
+          <span>
+            <label class="label-style">Specify path(s) / url(s) to scan:</label>
+            <i class="fa fa-info-circle info-icon" aria-hidden="true"
+              pTooltip="The paths/urls must be separated by commas (no whitespaces)."></i>
+          </span>
+        </div>
+        <div class="field">
           <input style="width:40em;" id="path" type="text" pInputText name="path" class="form-control"
           required aria-describedby="path" #name="ngModel"
-            [(ngModel)]="path" [ngClass]="path === '' ? 'ng-invalid ng-dirty' : '' " required/>
+          placeholder="{{placeholder}}"
+          (focus)="emptyPlaceholder()" [(ngModel)]="path" [ngClass]="path === '' ? 'ng-invalid ng-dirty' : '' " required/>
           <div *ngIf="path === '' && name.dirty">
             <small id="path" class="p-error">This field is required.</small>
           </div>
         </div>
       </div>
-      <div class="field col-12">
-        <label class="label-style">Specify checks to perform:</label>
-        <!--<div *ngFor="let mode of modes" class="field-radiobutton">
-          <p-radioButton [inputId]="mode.key" name="mode" [value]="mode" [(ngModel)]="selectedMode"></p-radioButton>
-          <label [for]="mode.key">{{mode.name}}</label>
-        </div>-->
+      <div class="col-12">
+        <div class="div-style">
+          <span>
+            <label class="label-style">Specify checks to perform:</label>
+            <i class="fa fa-info-circle info-icon" aria-hidden="true" pTooltip="Select at least one option. Otherwise, the repository will be cloned only."></i>
+          </span>
+        </div>
         <div *ngFor="let checkname of checknames" class="field-checkbox">
-          <p-checkbox name="checkname" value="checkname" [value]="checkname"  [(ngModel)]="selectedCheckNames"
+          <p-checkbox name="checkname" value="checkname" [value]="checkname" [(ngModel)]="selectedCheckNames"
             [inputId]="checkname.key"></p-checkbox>
           <label [for]="checkname.key">{{checkname.name}}</label>
-        </div>      
-      </div>   
+        </div>
+      </div>
     </div>
   </form>
   <ng-template pTemplate="footer">
     <p-button label="Scan" [disabled]="!path || path === ''" (onClick)="submit()"></p-button>
   </ng-template>
 </p-dialog>
+<p-progressSpinner *ngIf="scanInProgress" [style]="{width: '50px', height: '50px'}"
+  styleClass="my-spinner" strokeWidth="8" fill="var(--surface-ground)" animationDuration=".5s">
+</p-progressSpinner>
 <app-scan-overview [data]="fileData" [checkName]="selectedCheckNamesShort"></app-scan-overview>
 <p-toast position="center" key="scanError"></p-toast>

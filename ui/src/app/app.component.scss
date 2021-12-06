@@ -4,6 +4,13 @@
 .info-text {
     padding-bottom: 1em;
 }
+.info-icon {
+  margin-left: 0.5em;
+  color: grey;
+}
+.div-style {
+  margin-bottom: 0.3em;
+}
 :host ::ng-deep .p-dialog .p-dialog-footer button {
     width: 10em;
 }

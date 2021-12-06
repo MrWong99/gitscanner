@@ -3,15 +3,18 @@ import { FormsModule } from '@angular/forms';
 import { BrowserModule } from '@angular/platform-browser';
 import { BrowserAnimationsModule } from '@angular/platform-browser/animations';
 import { HttpClientModule } from '@angular/common/http';
+import { AccordionModule } from 'primeng/accordion';
 import { ButtonModule } from 'primeng/button';
 import { CheckboxModule } from 'primeng/checkbox';
 import { ConfirmDialogModule } from 'primeng/confirmdialog';
 import { DialogModule } from 'primeng/dialog';
 import { InputTextModule } from 'primeng/inputtext';
 import { MessageService } from 'primeng/api';
+import { ProgressSpinnerModule } from 'primeng/progressspinner';
 import { RadioButtonModule } from 'primeng/radiobutton';
 import { TableModule } from 'primeng/table';
 import { ToastModule } from 'primeng/toast';
+import { TooltipModule } from 'primeng/tooltip';
 import { AppRoutingModule } from './app-routing.module';
 import { AppComponent } from './app.component';
 import { ScanOverviewComponent } from './scan-overview/scan-overview.component';
@@ -25,6 +28,7 @@ import { ScanOverviewComponent } from './scan-overview/scan-overview.component';
     BrowserModule,
     BrowserAnimationsModule,
     AppRoutingModule,
+    AccordionModule,
     ButtonModule,
     CheckboxModule,
     ConfirmDialogModule,
@@ -32,9 +36,11 @@ import { ScanOverviewComponent } from './scan-overview/scan-overview.component';
     FormsModule,
     HttpClientModule,
     InputTextModule,
+    ProgressSpinnerModule,
     RadioButtonModule,
     TableModule,
-    ToastModule
+    ToastModule,
+    TooltipModule
   ],
   providers: [MessageService],
   bootstrap: [AppComponent]
