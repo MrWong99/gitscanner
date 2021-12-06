@@ -17,7 +17,7 @@ export class ScanOverviewComponent implements OnInit {
 
   constructor() { }
 
-  ngOnInit(): void { 
+  ngOnInit(): void {
     let result: any[] = [];
     this.data.forEach((f1: any) => {
       f1["checks"].forEach((check: any) => {
@@ -29,7 +29,7 @@ export class ScanOverviewComponent implements OnInit {
           })
           result.push(sahne);
       })
-    });  
+    });
     console.log(result);
     this.flattenedData = Object.assign([], result);
   }
@@ -60,17 +60,21 @@ export class ScanOverviewComponent implements OnInit {
     return this.checkName.includes('CheckCommitAuthor');
   }
 
+  isBigFileSearch() {
+    return this.checkName.includes('SearchBigFiles');
+  }
+
   getCheckName(checkNamePath: string): string {
     checkNamePath.slice(checkNamePath.lastIndexOf('.') + 1);
     return checkNamePath;
   }
 
-  listErrors() {    
+  listErrors() {
     this.data.array.forEach((entry: FileData) => {
       if (entry.error && entry.repository && entry.error !== '') {
         this.errors.push({repository: entry.repository, error: entry.error})
       }
-    });    
+    });
   }
 
 }

@@ -15,9 +15,10 @@ export class AppComponent implements OnInit, OnDestroy {
   selectedCheckNames: string[] = [];
   selectedCheckNamesShort: string[] = [];
   checknames: CheckNames[] = [
-    {name: 'Binary files', key: 'github.com/MrWong99/gitscanner/checks/binaryfile.SearchBinaries'},
-    {name: 'Illegal unicode characters', key: 'github.com/MrWong99/gitscanner/checks/unicode.SearchUnicode'},
-    {name: 'Commiter email does not match configured pattern', key: 'github.com/MrWong99/gitscanner/checks/commitmeta.CheckCommitAuthor'}
+    {name: 'Binary files', key: 'SearchBinaries'},
+    {name: 'Big files', key: 'SearchBigFiles'},
+    {name: 'Illegal unicode characters', key: 'SearchIllegalUnicodeCharacters'},
+    {name: 'Commiter email does not match configured pattern', key: 'CheckCommitMetaInformation'}
   ];
   getDataSubscription: Subscription | undefined;
 
@@ -30,336 +31,336 @@ export class AppComponent implements OnInit, OnDestroy {
         {
           "origin": "app/src/main/ic_message-playstore.png",
           "branch": "refs/heads/master",
-          "checkName": "github.com/MrWong99/gitscanner/checks/binaryfile.SearchBinaries",
+          "checkName": "SearchBinaries",
           "acknowledged": false,
           "additionalInfo": { "filemode": "0100644", "filesize": "12.5 kB" }
         },
         {
           "origin": "app/src/main/ic_star-playstore.png",
           "branch": "refs/heads/master",
-          "checkName": "github.com/MrWong99/gitscanner/checks/binaryfile.SearchBinaries",
+          "checkName": "SearchBinaries",
           "acknowledged": false,
           "additionalInfo": { "filemode": "0100644", "filesize": "28.0 kB" }
         },
         {
           "origin": "app/src/main/ic_wishlist-playstore.png",
           "branch": "refs/heads/master",
-          "checkName": "github.com/MrWong99/gitscanner/checks/binaryfile.SearchBinaries",
+          "checkName": "SearchBinaries",
           "acknowledged": false,
           "additionalInfo": { "filemode": "0100644", "filesize": "20.9 kB" }
         },
         {
           "origin": "app/src/main/res/drawable-v24/micasuca_view_background.png",
           "branch": "refs/heads/master",
-          "checkName": "github.com/MrWong99/gitscanner/checks/binaryfile.SearchBinaries",
+          "checkName": "SearchBinaries",
           "acknowledged": false,
           "additionalInfo": { "filemode": "0100644", "filesize": "27.7 kB" }
         },
         {
           "origin": "app/src/main/res/drawable-v24/micasuca_view_home_cut.png",
           "branch": "refs/heads/master",
-          "checkName": "github.com/MrWong99/gitscanner/checks/binaryfile.SearchBinaries",
+          "checkName": "SearchBinaries",
           "acknowledged": false,
           "additionalInfo": { "filemode": "0100644", "filesize": "30.0 kB" }
         },
         {
           "origin": "app/src/main/res/mipmap-hdpi/ic_launcher.png",
           "branch": "refs/heads/master",
-          "checkName": "github.com/MrWong99/gitscanner/checks/binaryfile.SearchBinaries",
+          "checkName": "SearchBinaries",
           "acknowledged": false,
           "additionalInfo": { "filemode": "0100644", "filesize": "3.6 kB" }
         },
         {
           "origin": "app/src/main/res/mipmap-hdpi/ic_launcher_round.png",
           "branch": "refs/heads/master",
-          "checkName": "github.com/MrWong99/gitscanner/checks/binaryfile.SearchBinaries",
+          "checkName": "SearchBinaries",
           "acknowledged": false,
           "additionalInfo": { "filemode": "0100644", "filesize": "5.3 kB" }
         },
         {
           "origin": "app/src/main/res/mipmap-hdpi/ic_message.png",
           "branch": "refs/heads/master",
-          "checkName": "github.com/MrWong99/gitscanner/checks/binaryfile.SearchBinaries",
+          "checkName": "SearchBinaries",
           "acknowledged": false,
           "additionalInfo": { "filemode": "0100644", "filesize": "2.0 kB" }
         },
         {
           "origin": "app/src/main/res/mipmap-hdpi/ic_message_round.png",
           "branch": "refs/heads/master",
-          "checkName": "github.com/MrWong99/gitscanner/checks/binaryfile.SearchBinaries",
+          "checkName": "SearchBinaries",
           "acknowledged": false,
           "additionalInfo": { "filemode": "0100644", "filesize": "3.8 kB" }
         },
         {
           "origin": "app/src/main/res/mipmap-hdpi/ic_star.png",
           "branch": "refs/heads/master",
-          "checkName": "github.com/MrWong99/gitscanner/checks/binaryfile.SearchBinaries",
+          "checkName": "SearchBinaries",
           "acknowledged": false,
           "additionalInfo": { "filemode": "0100644", "filesize": "2.8 kB" }
         },
         {
           "origin": "app/src/main/res/mipmap-hdpi/ic_star_round.png",
           "branch": "refs/heads/master",
-          "checkName": "github.com/MrWong99/gitscanner/checks/binaryfile.SearchBinaries",
+          "checkName": "SearchBinaries",
           "acknowledged": false,
           "additionalInfo": { "filemode": "0100644", "filesize": "4.9 kB" }
         },
         {
           "origin": "app/src/main/res/mipmap-hdpi/ic_wishlist.png",
           "branch": "refs/heads/master",
-          "checkName": "github.com/MrWong99/gitscanner/checks/binaryfile.SearchBinaries",
+          "checkName": "SearchBinaries",
           "acknowledged": false,
           "additionalInfo": { "filemode": "0100644", "filesize": "2.6 kB" }
         },
         {
           "origin": "app/src/main/res/mipmap-hdpi/ic_wishlist_round.png",
           "branch": "refs/heads/master",
-          "checkName": "github.com/MrWong99/gitscanner/checks/binaryfile.SearchBinaries",
+          "checkName": "SearchBinaries",
           "acknowledged": false,
           "additionalInfo": { "filemode": "0100644", "filesize": "4.5 kB" }
         },
         {
           "origin": "app/src/main/res/mipmap-mdpi/ic_launcher.png",
           "branch": "refs/heads/master",
-          "checkName": "github.com/MrWong99/gitscanner/checks/binaryfile.SearchBinaries",
+          "checkName": "SearchBinaries",
           "acknowledged": false,
           "additionalInfo": { "filemode": "0100644", "filesize": "2.6 kB" }
         },
         {
           "origin": "app/src/main/res/mipmap-mdpi/ic_launcher_round.png",
           "branch": "refs/heads/master",
-          "checkName": "github.com/MrWong99/gitscanner/checks/binaryfile.SearchBinaries",
+          "checkName": "SearchBinaries",
           "acknowledged": false,
           "additionalInfo": { "filemode": "0100644", "filesize": "3.4 kB" }
         },
         {
           "origin": "app/src/main/res/mipmap-mdpi/ic_message.png",
           "branch": "refs/heads/master",
-          "checkName": "github.com/MrWong99/gitscanner/checks/binaryfile.SearchBinaries",
+          "checkName": "SearchBinaries",
           "acknowledged": false,
           "additionalInfo": { "filemode": "0100644", "filesize": "1.7 kB" }
         },
         {
           "origin": "app/src/main/res/mipmap-mdpi/ic_message_round.png",
           "branch": "refs/heads/master",
-          "checkName": "github.com/MrWong99/gitscanner/checks/binaryfile.SearchBinaries",
+          "checkName": "SearchBinaries",
           "acknowledged": false,
           "additionalInfo": { "filemode": "0100644", "filesize": "2.3 kB" }
         },
         {
           "origin": "app/src/main/res/mipmap-mdpi/ic_star.png",
           "branch": "refs/heads/master",
-          "checkName": "github.com/MrWong99/gitscanner/checks/binaryfile.SearchBinaries",
+          "checkName": "SearchBinaries",
           "acknowledged": false,
           "additionalInfo": { "filemode": "0100644", "filesize": "2.1 kB" }
         },
         {
           "origin": "app/src/main/res/mipmap-mdpi/ic_star_round.png",
           "branch": "refs/heads/master",
-          "checkName": "github.com/MrWong99/gitscanner/checks/binaryfile.SearchBinaries",
+          "checkName": "SearchBinaries",
           "acknowledged": false,
           "additionalInfo": { "filemode": "0100644", "filesize": "3.0 kB" }
         },
         {
           "origin": "app/src/main/res/mipmap-mdpi/ic_wishlist.png",
           "branch": "refs/heads/master",
-          "checkName": "github.com/MrWong99/gitscanner/checks/binaryfile.SearchBinaries",
+          "checkName": "SearchBinaries",
           "acknowledged": false,
           "additionalInfo": { "filemode": "0100644", "filesize": "2.0 kB" }
         },
         {
           "origin": "app/src/main/res/mipmap-mdpi/ic_wishlist_round.png",
           "branch": "refs/heads/master",
-          "checkName": "github.com/MrWong99/gitscanner/checks/binaryfile.SearchBinaries",
+          "checkName": "SearchBinaries",
           "acknowledged": false,
           "additionalInfo": { "filemode": "0100644", "filesize": "2.7 kB" }
         },
         {
           "origin": "app/src/main/res/mipmap-xhdpi/ic_launcher.png",
           "branch": "refs/heads/master",
-          "checkName": "github.com/MrWong99/gitscanner/checks/binaryfile.SearchBinaries",
+          "checkName": "SearchBinaries",
           "acknowledged": false,
           "additionalInfo": { "filemode": "0100644", "filesize": "4.9 kB" }
         },
         {
           "origin": "app/src/main/res/mipmap-xhdpi/ic_launcher_round.png",
           "branch": "refs/heads/master",
-          "checkName": "github.com/MrWong99/gitscanner/checks/binaryfile.SearchBinaries",
+          "checkName": "SearchBinaries",
           "acknowledged": false,
           "additionalInfo": { "filemode": "0100644", "filesize": "7.5 kB" }
         },
         {
           "origin": "app/src/main/res/mipmap-xhdpi/ic_message.png",
           "branch": "refs/heads/master",
-          "checkName": "github.com/MrWong99/gitscanner/checks/binaryfile.SearchBinaries",
+          "checkName": "SearchBinaries",
           "acknowledged": false,
           "additionalInfo": { "filemode": "0100644", "filesize": "2.6 kB" }
         },
         {
           "origin": "app/src/main/res/mipmap-xhdpi/ic_message_round.png",
           "branch": "refs/heads/master",
-          "checkName": "github.com/MrWong99/gitscanner/checks/binaryfile.SearchBinaries",
+          "checkName": "SearchBinaries",
           "acknowledged": false,
           "additionalInfo": { "filemode": "0100644", "filesize": "5.2 kB" }
         },
         {
           "origin": "app/src/main/res/mipmap-xhdpi/ic_star.png",
           "branch": "refs/heads/master",
-          "checkName": "github.com/MrWong99/gitscanner/checks/binaryfile.SearchBinaries",
+          "checkName": "SearchBinaries",
           "acknowledged": false,
           "additionalInfo": { "filemode": "0100644", "filesize": "3.8 kB" }
         },
         {
           "origin": "app/src/main/res/mipmap-xhdpi/ic_star_round.png",
           "branch": "refs/heads/master",
-          "checkName": "github.com/MrWong99/gitscanner/checks/binaryfile.SearchBinaries",
+          "checkName": "SearchBinaries",
           "acknowledged": false,
           "additionalInfo": { "filemode": "0100644", "filesize": "6.7 kB" }
         },
         {
           "origin": "app/src/main/res/mipmap-xhdpi/ic_startseite.png",
           "branch": "refs/heads/master",
-          "checkName": "github.com/MrWong99/gitscanner/checks/binaryfile.SearchBinaries",
+          "checkName": "SearchBinaries",
           "acknowledged": false,
           "additionalInfo": { "filemode": "0100644", "filesize": "5.6 kB" }
         },
         {
           "origin": "app/src/main/res/mipmap-xhdpi/ic_startseite_foreground.png",
           "branch": "refs/heads/master",
-          "checkName": "github.com/MrWong99/gitscanner/checks/binaryfile.SearchBinaries",
+          "checkName": "SearchBinaries",
           "acknowledged": false,
           "additionalInfo": { "filemode": "0100644", "filesize": "5.7 kB" }
         },
         {
           "origin": "app/src/main/res/mipmap-xhdpi/ic_wishlist.png",
           "branch": "refs/heads/master",
-          "checkName": "github.com/MrWong99/gitscanner/checks/binaryfile.SearchBinaries",
+          "checkName": "SearchBinaries",
           "acknowledged": false,
           "additionalInfo": { "filemode": "0100644", "filesize": "3.3 kB" }
         },
         {
           "origin": "app/src/main/res/mipmap-xhdpi/ic_wishlist_round.png",
           "branch": "refs/heads/master",
-          "checkName": "github.com/MrWong99/gitscanner/checks/binaryfile.SearchBinaries",
+          "checkName": "SearchBinaries",
           "acknowledged": false,
           "additionalInfo": { "filemode": "0100644", "filesize": "5.9 kB" }
         },
         {
           "origin": "app/src/main/res/mipmap-xxhdpi/ic_launcher.png",
           "branch": "refs/heads/master",
-          "checkName": "github.com/MrWong99/gitscanner/checks/binaryfile.SearchBinaries",
+          "checkName": "SearchBinaries",
           "acknowledged": false,
           "additionalInfo": { "filemode": "0100644", "filesize": "7.9 kB" }
         },
         {
           "origin": "app/src/main/res/mipmap-xxhdpi/ic_launcher_round.png",
           "branch": "refs/heads/master",
-          "checkName": "github.com/MrWong99/gitscanner/checks/binaryfile.SearchBinaries",
+          "checkName": "SearchBinaries",
           "acknowledged": false,
           "additionalInfo": { "filemode": "0100644", "filesize": "11.9 kB" }
         },
         {
           "origin": "app/src/main/res/mipmap-xxhdpi/ic_message.png",
           "branch": "refs/heads/master",
-          "checkName": "github.com/MrWong99/gitscanner/checks/binaryfile.SearchBinaries",
+          "checkName": "SearchBinaries",
           "acknowledged": false,
           "additionalInfo": { "filemode": "0100644", "filesize": "4.4 kB" }
         },
         {
           "origin": "app/src/main/res/mipmap-xxhdpi/ic_message_round.png",
           "branch": "refs/heads/master",
-          "checkName": "github.com/MrWong99/gitscanner/checks/binaryfile.SearchBinaries",
+          "checkName": "SearchBinaries",
           "acknowledged": false,
           "additionalInfo": { "filemode": "0100644", "filesize": "8.1 kB" }
         },
         {
           "origin": "app/src/main/res/mipmap-xxhdpi/ic_star.png",
           "branch": "refs/heads/master",
-          "checkName": "github.com/MrWong99/gitscanner/checks/binaryfile.SearchBinaries",
+          "checkName": "SearchBinaries",
           "acknowledged": false,
           "additionalInfo": { "filemode": "0100644", "filesize": "6.3 kB" }
         },
         {
           "origin": "app/src/main/res/mipmap-xxhdpi/ic_star_round.png",
           "branch": "refs/heads/master",
-          "checkName": "github.com/MrWong99/gitscanner/checks/binaryfile.SearchBinaries",
+          "checkName": "SearchBinaries",
           "acknowledged": false,
           "additionalInfo": { "filemode": "0100644", "filesize": "10.5 kB" }
         },
         {
           "origin": "app/src/main/res/mipmap-xxhdpi/ic_wishlist.png",
           "branch": "refs/heads/master",
-          "checkName": "github.com/MrWong99/gitscanner/checks/binaryfile.SearchBinaries",
+          "checkName": "SearchBinaries",
           "acknowledged": false,
           "additionalInfo": { "filemode": "0100644", "filesize": "5.4 kB" }
         },
         {
           "origin": "app/src/main/res/mipmap-xxhdpi/ic_wishlist_round.png",
           "branch": "refs/heads/master",
-          "checkName": "github.com/MrWong99/gitscanner/checks/binaryfile.SearchBinaries",
+          "checkName": "SearchBinaries",
           "acknowledged": false,
           "additionalInfo": { "filemode": "0100644", "filesize": "9.5 kB" }
         },
         {
           "origin": "app/src/main/res/mipmap-xxxhdpi/ic_launcher.png",
           "branch": "refs/heads/master",
-          "checkName": "github.com/MrWong99/gitscanner/checks/binaryfile.SearchBinaries",
+          "checkName": "SearchBinaries",
           "acknowledged": false,
           "additionalInfo": { "filemode": "0100644", "filesize": "10.7 kB" }
         },
         {
           "origin": "app/src/main/res/mipmap-xxxhdpi/ic_launcher_round.png",
           "branch": "refs/heads/master",
-          "checkName": "github.com/MrWong99/gitscanner/checks/binaryfile.SearchBinaries",
+          "checkName": "SearchBinaries",
           "acknowledged": false,
           "additionalInfo": { "filemode": "0100644", "filesize": "16.6 kB" }
         },
         {
           "origin": "app/src/main/res/mipmap-xxxhdpi/ic_message.png",
           "branch": "refs/heads/master",
-          "checkName": "github.com/MrWong99/gitscanner/checks/binaryfile.SearchBinaries",
+          "checkName": "SearchBinaries",
           "acknowledged": false,
           "additionalInfo": { "filemode": "0100644", "filesize": "5.7 kB" }
         },
         {
           "origin": "app/src/main/res/mipmap-xxxhdpi/ic_message_round.png",
           "branch": "refs/heads/master",
-          "checkName": "github.com/MrWong99/gitscanner/checks/binaryfile.SearchBinaries",
+          "checkName": "SearchBinaries",
           "acknowledged": false,
           "additionalInfo": { "filemode": "0100644", "filesize": "11.7 kB" }
         },
         {
           "origin": "app/src/main/res/mipmap-xxxhdpi/ic_star.png",
           "branch": "refs/heads/master",
-          "checkName": "github.com/MrWong99/gitscanner/checks/binaryfile.SearchBinaries",
+          "checkName": "SearchBinaries",
           "acknowledged": false,
           "additionalInfo": { "filemode": "0100644", "filesize": "8.6 kB" }
         },
         {
           "origin": "app/src/main/res/mipmap-xxxhdpi/ic_star_round.png",
           "branch": "refs/heads/master",
-          "checkName": "github.com/MrWong99/gitscanner/checks/binaryfile.SearchBinaries",
+          "checkName": "SearchBinaries",
           "acknowledged": false,
           "additionalInfo": { "filemode": "0100644", "filesize": "15.2 kB" }
         },
         {
           "origin": "app/src/main/res/mipmap-xxxhdpi/ic_wishlist.png",
           "branch": "refs/heads/master",
-          "checkName": "github.com/MrWong99/gitscanner/checks/binaryfile.SearchBinaries",
+          "checkName": "SearchBinaries",
           "acknowledged": false,
           "additionalInfo": { "filemode": "0100644", "filesize": "7.6 kB" }
         },
         {
           "origin": "app/src/main/res/mipmap-xxxhdpi/ic_wishlist_round.png",
           "branch": "refs/heads/master",
-          "checkName": "github.com/MrWong99/gitscanner/checks/binaryfile.SearchBinaries",
+          "checkName": "SearchBinaries",
           "acknowledged": false,
           "additionalInfo": { "filemode": "0100644", "filesize": "14.0 kB" }
         },
         {
           "origin": "gradlew",
           "branch": "refs/heads/master",
-          "checkName": "github.com/MrWong99/gitscanner/checks/unicode.SearchUnicode",
+          "checkName": "SearchIllegalUnicodeCharacters",
           "acknowledged": false,
           "additionalInfo": {
             "character": "'\\u202a'",
@@ -370,14 +371,14 @@ export class AppComponent implements OnInit, OnDestroy {
         {
           "origin": "gradle/wrapper/gradle-wrapper.jar",
           "branch": "refs/heads/master",
-          "checkName": "github.com/MrWong99/gitscanner/checks/binaryfile.SearchBinaries",
+          "checkName": "SearchBinaries",
           "acknowledged": false,
           "additionalInfo": { "filemode": "0100644", "filesize": "54.3 kB" }
         },
         {
           "origin": "gradlew",
           "branch": "refs/remotes/origin/master",
-          "checkName": "github.com/MrWong99/gitscanner/checks/unicode.SearchUnicode",
+          "checkName": "SearchIllegalUnicodeCharacters",
           "acknowledged": false,
           "additionalInfo": {
             "character": "'\\u202a'",
@@ -388,336 +389,336 @@ export class AppComponent implements OnInit, OnDestroy {
         {
           "origin": "app/src/main/ic_message-playstore.png",
           "branch": "refs/remotes/origin/master",
-          "checkName": "github.com/MrWong99/gitscanner/checks/binaryfile.SearchBinaries",
+          "checkName": "SearchBinaries",
           "acknowledged": false,
           "additionalInfo": { "filemode": "0100644", "filesize": "12.5 kB" }
         },
         {
           "origin": "app/src/main/ic_star-playstore.png",
           "branch": "refs/remotes/origin/master",
-          "checkName": "github.com/MrWong99/gitscanner/checks/binaryfile.SearchBinaries",
+          "checkName": "SearchBinaries",
           "acknowledged": false,
           "additionalInfo": { "filemode": "0100644", "filesize": "28.0 kB" }
         },
         {
           "origin": "app/src/main/ic_wishlist-playstore.png",
           "branch": "refs/remotes/origin/master",
-          "checkName": "github.com/MrWong99/gitscanner/checks/binaryfile.SearchBinaries",
+          "checkName": "SearchBinaries",
           "acknowledged": false,
           "additionalInfo": { "filemode": "0100644", "filesize": "20.9 kB" }
         },
         {
           "origin": "app/src/main/res/drawable-v24/micasuca_view_background.png",
           "branch": "refs/remotes/origin/master",
-          "checkName": "github.com/MrWong99/gitscanner/checks/binaryfile.SearchBinaries",
+          "checkName": "SearchBinaries",
           "acknowledged": false,
           "additionalInfo": { "filemode": "0100644", "filesize": "27.7 kB" }
         },
         {
           "origin": "app/src/main/res/drawable-v24/micasuca_view_home_cut.png",
           "branch": "refs/remotes/origin/master",
-          "checkName": "github.com/MrWong99/gitscanner/checks/binaryfile.SearchBinaries",
+          "checkName": "SearchBinaries",
           "acknowledged": false,
           "additionalInfo": { "filemode": "0100644", "filesize": "30.0 kB" }
         },
         {
           "origin": "app/src/main/res/mipmap-hdpi/ic_launcher.png",
           "branch": "refs/remotes/origin/master",
-          "checkName": "github.com/MrWong99/gitscanner/checks/binaryfile.SearchBinaries",
+          "checkName": "SearchBinaries",
           "acknowledged": false,
           "additionalInfo": { "filemode": "0100644", "filesize": "3.6 kB" }
         },
         {
           "origin": "app/src/main/res/mipmap-hdpi/ic_launcher_round.png",
           "branch": "refs/remotes/origin/master",
-          "checkName": "github.com/MrWong99/gitscanner/checks/binaryfile.SearchBinaries",
+          "checkName": "SearchBinaries",
           "acknowledged": false,
           "additionalInfo": { "filemode": "0100644", "filesize": "5.3 kB" }
         },
         {
           "origin": "app/src/main/res/mipmap-hdpi/ic_message.png",
           "branch": "refs/remotes/origin/master",
-          "checkName": "github.com/MrWong99/gitscanner/checks/binaryfile.SearchBinaries",
+          "checkName": "SearchBinaries",
           "acknowledged": false,
           "additionalInfo": { "filemode": "0100644", "filesize": "2.0 kB" }
         },
         {
           "origin": "app/src/main/res/mipmap-hdpi/ic_message_round.png",
           "branch": "refs/remotes/origin/master",
-          "checkName": "github.com/MrWong99/gitscanner/checks/binaryfile.SearchBinaries",
+          "checkName": "SearchBinaries",
           "acknowledged": false,
           "additionalInfo": { "filemode": "0100644", "filesize": "3.8 kB" }
         },
         {
           "origin": "app/src/main/res/mipmap-hdpi/ic_star.png",
           "branch": "refs/remotes/origin/master",
-          "checkName": "github.com/MrWong99/gitscanner/checks/binaryfile.SearchBinaries",
+          "checkName": "SearchBinaries",
           "acknowledged": false,
           "additionalInfo": { "filemode": "0100644", "filesize": "2.8 kB" }
         },
         {
           "origin": "app/src/main/res/mipmap-hdpi/ic_star_round.png",
           "branch": "refs/remotes/origin/master",
-          "checkName": "github.com/MrWong99/gitscanner/checks/binaryfile.SearchBinaries",
+          "checkName": "SearchBinaries",
           "acknowledged": false,
           "additionalInfo": { "filemode": "0100644", "filesize": "4.9 kB" }
         },
         {
           "origin": "app/src/main/res/mipmap-hdpi/ic_wishlist.png",
           "branch": "refs/remotes/origin/master",
-          "checkName": "github.com/MrWong99/gitscanner/checks/binaryfile.SearchBinaries",
+          "checkName": "SearchBinaries",
           "acknowledged": false,
           "additionalInfo": { "filemode": "0100644", "filesize": "2.6 kB" }
         },
         {
           "origin": "app/src/main/res/mipmap-hdpi/ic_wishlist_round.png",
           "branch": "refs/remotes/origin/master",
-          "checkName": "github.com/MrWong99/gitscanner/checks/binaryfile.SearchBinaries",
+          "checkName": "SearchBinaries",
           "acknowledged": false,
           "additionalInfo": { "filemode": "0100644", "filesize": "4.5 kB" }
         },
         {
           "origin": "app/src/main/res/mipmap-mdpi/ic_launcher.png",
           "branch": "refs/remotes/origin/master",
-          "checkName": "github.com/MrWong99/gitscanner/checks/binaryfile.SearchBinaries",
+          "checkName": "SearchBinaries",
           "acknowledged": false,
           "additionalInfo": { "filemode": "0100644", "filesize": "2.6 kB" }
         },
         {
           "origin": "app/src/main/res/mipmap-mdpi/ic_launcher_round.png",
           "branch": "refs/remotes/origin/master",
-          "checkName": "github.com/MrWong99/gitscanner/checks/binaryfile.SearchBinaries",
+          "checkName": "SearchBinaries",
           "acknowledged": false,
           "additionalInfo": { "filemode": "0100644", "filesize": "3.4 kB" }
         },
         {
           "origin": "app/src/main/res/mipmap-mdpi/ic_message.png",
           "branch": "refs/remotes/origin/master",
-          "checkName": "github.com/MrWong99/gitscanner/checks/binaryfile.SearchBinaries",
+          "checkName": "SearchBinaries",
           "acknowledged": false,
           "additionalInfo": { "filemode": "0100644", "filesize": "1.7 kB" }
         },
         {
           "origin": "app/src/main/res/mipmap-mdpi/ic_message_round.png",
           "branch": "refs/remotes/origin/master",
-          "checkName": "github.com/MrWong99/gitscanner/checks/binaryfile.SearchBinaries",
+          "checkName": "SearchBinaries",
           "acknowledged": false,
           "additionalInfo": { "filemode": "0100644", "filesize": "2.3 kB" }
         },
         {
           "origin": "app/src/main/res/mipmap-mdpi/ic_star.png",
           "branch": "refs/remotes/origin/master",
-          "checkName": "github.com/MrWong99/gitscanner/checks/binaryfile.SearchBinaries",
+          "checkName": "SearchBinaries",
           "acknowledged": false,
           "additionalInfo": { "filemode": "0100644", "filesize": "2.1 kB" }
         },
         {
           "origin": "app/src/main/res/mipmap-mdpi/ic_star_round.png",
           "branch": "refs/remotes/origin/master",
-          "checkName": "github.com/MrWong99/gitscanner/checks/binaryfile.SearchBinaries",
+          "checkName": "SearchBinaries",
           "acknowledged": false,
           "additionalInfo": { "filemode": "0100644", "filesize": "3.0 kB" }
         },
         {
           "origin": "app/src/main/res/mipmap-mdpi/ic_wishlist.png",
           "branch": "refs/remotes/origin/master",
-          "checkName": "github.com/MrWong99/gitscanner/checks/binaryfile.SearchBinaries",
+          "checkName": "SearchBinaries",
           "acknowledged": false,
           "additionalInfo": { "filemode": "0100644", "filesize": "2.0 kB" }
         },
         {
           "origin": "app/src/main/res/mipmap-mdpi/ic_wishlist_round.png",
           "branch": "refs/remotes/origin/master",
-          "checkName": "github.com/MrWong99/gitscanner/checks/binaryfile.SearchBinaries",
+          "checkName": "SearchBinaries",
           "acknowledged": false,
           "additionalInfo": { "filemode": "0100644", "filesize": "2.7 kB" }
         },
         {
           "origin": "app/src/main/res/mipmap-xhdpi/ic_launcher.png",
           "branch": "refs/remotes/origin/master",
-          "checkName": "github.com/MrWong99/gitscanner/checks/binaryfile.SearchBinaries",
+          "checkName": "SearchBinaries",
           "acknowledged": false,
           "additionalInfo": { "filemode": "0100644", "filesize": "4.9 kB" }
         },
         {
           "origin": "app/src/main/res/mipmap-xhdpi/ic_launcher_round.png",
           "branch": "refs/remotes/origin/master",
-          "checkName": "github.com/MrWong99/gitscanner/checks/binaryfile.SearchBinaries",
+          "checkName": "SearchBinaries",
           "acknowledged": false,
           "additionalInfo": { "filemode": "0100644", "filesize": "7.5 kB" }
         },
         {
           "origin": "app/src/main/res/mipmap-xhdpi/ic_message.png",
           "branch": "refs/remotes/origin/master",
-          "checkName": "github.com/MrWong99/gitscanner/checks/binaryfile.SearchBinaries",
+          "checkName": "SearchBinaries",
           "acknowledged": false,
           "additionalInfo": { "filemode": "0100644", "filesize": "2.6 kB" }
         },
         {
           "origin": "app/src/main/res/mipmap-xhdpi/ic_message_round.png",
           "branch": "refs/remotes/origin/master",
-          "checkName": "github.com/MrWong99/gitscanner/checks/binaryfile.SearchBinaries",
+          "checkName": "SearchBinaries",
           "acknowledged": false,
           "additionalInfo": { "filemode": "0100644", "filesize": "5.2 kB" }
         },
         {
           "origin": "app/src/main/res/mipmap-xhdpi/ic_star.png",
           "branch": "refs/remotes/origin/master",
-          "checkName": "github.com/MrWong99/gitscanner/checks/binaryfile.SearchBinaries",
+          "checkName": "SearchBinaries",
           "acknowledged": false,
           "additionalInfo": { "filemode": "0100644", "filesize": "3.8 kB" }
         },
         {
           "origin": "app/src/main/res/mipmap-xhdpi/ic_star_round.png",
           "branch": "refs/remotes/origin/master",
-          "checkName": "github.com/MrWong99/gitscanner/checks/binaryfile.SearchBinaries",
+          "checkName": "SearchBinaries",
           "acknowledged": false,
           "additionalInfo": { "filemode": "0100644", "filesize": "6.7 kB" }
         },
         {
           "origin": "app/src/main/res/mipmap-xhdpi/ic_startseite.png",
           "branch": "refs/remotes/origin/master",
-          "checkName": "github.com/MrWong99/gitscanner/checks/binaryfile.SearchBinaries",
+          "checkName": "SearchBinaries",
           "acknowledged": false,
           "additionalInfo": { "filemode": "0100644", "filesize": "5.6 kB" }
         },
         {
           "origin": "app/src/main/res/mipmap-xhdpi/ic_startseite_foreground.png",
           "branch": "refs/remotes/origin/master",
-          "checkName": "github.com/MrWong99/gitscanner/checks/binaryfile.SearchBinaries",
+          "checkName": "SearchBinaries",
           "acknowledged": false,
           "additionalInfo": { "filemode": "0100644", "filesize": "5.7 kB" }
         },
         {
           "origin": "app/src/main/res/mipmap-xhdpi/ic_wishlist.png",
           "branch": "refs/remotes/origin/master",
-          "checkName": "github.com/MrWong99/gitscanner/checks/binaryfile.SearchBinaries",
+          "checkName": "SearchBinaries",
           "acknowledged": false,
           "additionalInfo": { "filemode": "0100644", "filesize": "3.3 kB" }
         },
         {
           "origin": "app/src/main/res/mipmap-xhdpi/ic_wishlist_round.png",
           "branch": "refs/remotes/origin/master",
-          "checkName": "github.com/MrWong99/gitscanner/checks/binaryfile.SearchBinaries",
+          "checkName": "SearchBinaries",
           "acknowledged": false,
           "additionalInfo": { "filemode": "0100644", "filesize": "5.9 kB" }
         },
         {
           "origin": "app/src/main/res/mipmap-xxhdpi/ic_launcher.png",
           "branch": "refs/remotes/origin/master",
-          "checkName": "github.com/MrWong99/gitscanner/checks/binaryfile.SearchBinaries",
+          "checkName": "SearchBinaries",
           "acknowledged": false,
           "additionalInfo": { "filemode": "0100644", "filesize": "7.9 kB" }
         },
         {
           "origin": "app/src/main/res/mipmap-xxhdpi/ic_launcher_round.png",
           "branch": "refs/remotes/origin/master",
-          "checkName": "github.com/MrWong99/gitscanner/checks/binaryfile.SearchBinaries",
+          "checkName": "SearchBinaries",
           "acknowledged": false,
           "additionalInfo": { "filemode": "0100644", "filesize": "11.9 kB" }
         },
         {
           "origin": "app/src/main/res/mipmap-xxhdpi/ic_message.png",
           "branch": "refs/remotes/origin/master",
-          "checkName": "github.com/MrWong99/gitscanner/checks/binaryfile.SearchBinaries",
+          "checkName": "SearchBinaries",
           "acknowledged": false,
           "additionalInfo": { "filemode": "0100644", "filesize": "4.4 kB" }
         },
         {
           "origin": "app/src/main/res/mipmap-xxhdpi/ic_message_round.png",
           "branch": "refs/remotes/origin/master",
-          "checkName": "github.com/MrWong99/gitscanner/checks/binaryfile.SearchBinaries",
+          "checkName": "SearchBinaries",
           "acknowledged": false,
           "additionalInfo": { "filemode": "0100644", "filesize": "8.1 kB" }
         },
         {
           "origin": "app/src/main/res/mipmap-xxhdpi/ic_star.png",
           "branch": "refs/remotes/origin/master",
-          "checkName": "github.com/MrWong99/gitscanner/checks/binaryfile.SearchBinaries",
+          "checkName": "SearchBinaries",
           "acknowledged": false,
           "additionalInfo": { "filemode": "0100644", "filesize": "6.3 kB" }
         },
         {
           "origin": "app/src/main/res/mipmap-xxhdpi/ic_star_round.png",
           "branch": "refs/remotes/origin/master",
-          "checkName": "github.com/MrWong99/gitscanner/checks/binaryfile.SearchBinaries",
+          "checkName": "SearchBinaries",
           "acknowledged": false,
           "additionalInfo": { "filemode": "0100644", "filesize": "10.5 kB" }
         },
         {
           "origin": "app/src/main/res/mipmap-xxhdpi/ic_wishlist.png",
           "branch": "refs/remotes/origin/master",
-          "checkName": "github.com/MrWong99/gitscanner/checks/binaryfile.SearchBinaries",
+          "checkName": "SearchBinaries",
           "acknowledged": false,
           "additionalInfo": { "filemode": "0100644", "filesize": "5.4 kB" }
         },
         {
           "origin": "app/src/main/res/mipmap-xxhdpi/ic_wishlist_round.png",
           "branch": "refs/remotes/origin/master",
-          "checkName": "github.com/MrWong99/gitscanner/checks/binaryfile.SearchBinaries",
+          "checkName": "SearchBinaries",
           "acknowledged": false,
           "additionalInfo": { "filemode": "0100644", "filesize": "9.5 kB" }
         },
         {
           "origin": "app/src/main/res/mipmap-xxxhdpi/ic_launcher.png",
           "branch": "refs/remotes/origin/master",
-          "checkName": "github.com/MrWong99/gitscanner/checks/binaryfile.SearchBinaries",
+          "checkName": "SearchBinaries",
           "acknowledged": false,
           "additionalInfo": { "filemode": "0100644", "filesize": "10.7 kB" }
         },
         {
           "origin": "app/src/main/res/mipmap-xxxhdpi/ic_launcher_round.png",
           "branch": "refs/remotes/origin/master",
-          "checkName": "github.com/MrWong99/gitscanner/checks/binaryfile.SearchBinaries",
+          "checkName": "SearchBinaries",
           "acknowledged": false,
           "additionalInfo": { "filemode": "0100644", "filesize": "16.6 kB" }
         },
         {
           "origin": "app/src/main/res/mipmap-xxxhdpi/ic_message.png",
           "branch": "refs/remotes/origin/master",
-          "checkName": "github.com/MrWong99/gitscanner/checks/binaryfile.SearchBinaries",
+          "checkName": "SearchBinaries",
           "acknowledged": false,
           "additionalInfo": { "filemode": "0100644", "filesize": "5.7 kB" }
         },
         {
           "origin": "app/src/main/res/mipmap-xxxhdpi/ic_message_round.png",
           "branch": "refs/remotes/origin/master",
-          "checkName": "github.com/MrWong99/gitscanner/checks/binaryfile.SearchBinaries",
+          "checkName": "SearchBinaries",
           "acknowledged": false,
           "additionalInfo": { "filemode": "0100644", "filesize": "11.7 kB" }
         },
         {
           "origin": "app/src/main/res/mipmap-xxxhdpi/ic_star.png",
           "branch": "refs/remotes/origin/master",
-          "checkName": "github.com/MrWong99/gitscanner/checks/binaryfile.SearchBinaries",
+          "checkName": "SearchBinaries",
           "acknowledged": false,
           "additionalInfo": { "filemode": "0100644", "filesize": "8.6 kB" }
         },
         {
           "origin": "app/src/main/res/mipmap-xxxhdpi/ic_star_round.png",
           "branch": "refs/remotes/origin/master",
-          "checkName": "github.com/MrWong99/gitscanner/checks/binaryfile.SearchBinaries",
+          "checkName": "SearchBinaries",
           "acknowledged": false,
           "additionalInfo": { "filemode": "0100644", "filesize": "15.2 kB" }
         },
         {
           "origin": "app/src/main/res/mipmap-xxxhdpi/ic_wishlist.png",
           "branch": "refs/remotes/origin/master",
-          "checkName": "github.com/MrWong99/gitscanner/checks/binaryfile.SearchBinaries",
+          "checkName": "SearchBinaries",
           "acknowledged": false,
           "additionalInfo": { "filemode": "0100644", "filesize": "7.6 kB" }
         },
         {
           "origin": "app/src/main/res/mipmap-xxxhdpi/ic_wishlist_round.png",
           "branch": "refs/remotes/origin/master",
-          "checkName": "github.com/MrWong99/gitscanner/checks/binaryfile.SearchBinaries",
+          "checkName": "SearchBinaries",
           "acknowledged": false,
           "additionalInfo": { "filemode": "0100644", "filesize": "14.0 kB" }
         },
         {
           "origin": "gradle/wrapper/gradle-wrapper.jar",
           "branch": "refs/remotes/origin/master",
-          "checkName": "github.com/MrWong99/gitscanner/checks/binaryfile.SearchBinaries",
+          "checkName": "SearchBinaries",
           "acknowledged": false,
           "additionalInfo": { "filemode": "0100644", "filesize": "54.3 kB" }
         }
@@ -735,17 +736,17 @@ export class AppComponent implements OnInit, OnDestroy {
     private messageService: MessageService,
     private searchBinaryService: SearchBinaryService) {
     this.selectedCheckNames.push(this.checknames[0].name);
-    
-    /*let result = this.fileData.flatMap((data, _, arr) => {      
+
+    /*let result = this.fileData.flatMap((data, _, arr) => {
       data.checks.forEach(e => {
         arr.push(Object.assign({origin: e.origin, branch: e.branch, checkName: e.checkName,
-          acknowledged: e.acknowledged, check: null}, data));      
+          acknowledged: e.acknowledged, check: null}, data));
       })
       return arr;
-    }, []);    
+    }, []);
     console.log(result)*/
   }
- 
+
   ngOnInit() {
   }
 
@@ -753,13 +754,13 @@ export class AppComponent implements OnInit, OnDestroy {
     this.display = true;
   }
 
-  submit() {   
+  submit() {
     let selectedCheckNames: string[] = [];
     this.checknames.forEach((entry) => {
       selectedCheckNames.push(entry.key);
       this.selectedCheckNamesShort = Object.assign([], selectedCheckNames);
     })
-    this.getDataSubscription = this.searchBinaryService.getFileData(this.path, selectedCheckNames).subscribe(data => {            
+    this.getDataSubscription = this.searchBinaryService.getFileData(this.path, selectedCheckNames).subscribe(data => {
       if (data && data.length > 0) {
         this.fileData = data;
       }

@@ -12,11 +12,11 @@ export interface Error {
   error: string
 }
 
-export interface FileData {  
+export interface FileData {
   date: string,
   repository: string,
   error: string,
-  checks: Checks[]    
+  checks: Checks[]
 }
 
 interface Checks {
@@ -43,7 +43,7 @@ interface AdditionalInfo {
   providedIn: 'root'
 })
 export class SearchBinaryService {
-  baseUrl: string = '/api/v1/checkrepos';
+  baseUrl: string = '/api/v1/checkRepos';
 
   constructor(private httpClient: HttpClient) { }
 
@@ -59,7 +59,7 @@ export class SearchBinaryService {
     headers.set('Content-Type', 'application/json');
     // binary files, illegal Unicode chars, commit email
     // binary files: github.com/MrWong99/gitscanner/checks/binaryfile.SearchBinaries
-    // illegal unicode chars: 
+    // illegal unicode chars:
     return this.httpClient.post<FileData[]>(this.baseUrl, body, {headers: headers});
   }
 }
