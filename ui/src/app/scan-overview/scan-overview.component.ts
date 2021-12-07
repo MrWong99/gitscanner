@@ -75,7 +75,7 @@ export class ScanOverviewComponent implements OnChanges, OnDestroy {
    * @returns true/false
    */
   isUnicodeSearch(): boolean {
-    return this.checkName.includes('SearchUnicode');
+    return this.checkName.includes('SearchIllegalUnicodeCharacters');
   }
 
    /**
@@ -83,7 +83,7 @@ export class ScanOverviewComponent implements OnChanges, OnDestroy {
    * @returns true/false
    */
   isCommitSearch(): boolean {
-    return this.checkName.includes('CheckCommitAuthor');
+    return this.checkName.includes('CheckCommitMetaInformation');
   }
 
    /**
