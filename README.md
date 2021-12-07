@@ -9,6 +9,8 @@ To simply start the scanner as webservice configure a port to use and optionally
 
 `./gitscanner -port 16092 -ssl-certificate-chain-file ~/.tls/my-cert-chain.crt.pem -ssl-private-key-file ~/.tls/tls.key.pem`
 
+![UI Example](/ui_example.png)
+
 If you instead just want to run in single execution mode with CLI don't provide any port and then refer to the possible configuration parameters:
 
 ```
