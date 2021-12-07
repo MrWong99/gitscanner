@@ -20,6 +20,8 @@ Usage of ./gitscanner:
         Optional pattern to match refs against. Only matches will be processed in checks that rely on refs.
   -email-pattern string
         Pattern to match all commiter and author emails against. This will be used for the commitmeta.CheckCommits check.
+  -filesize-threshold-bytes int64
+        Amout of bytes that a file should have maximum to trigger this check. (default 81920)
   -name-pattern string
         Pattern to match all commiter and author names against. This will be used for the commitmeta.CheckCommits check.
   -password string
@@ -210,29 +212,39 @@ When started in server mode *gitscanner* will provide the following endpoints:
 ]
 ```
 
-### GET /api/v1/config - Retrieve the current application configuration
+### GET /api/v1/config/{checkName} - Retrieve the current configuration for a check
+
+**Path Params:**
+
+* `checkName`: the name of the check whos configuration should be returned.
 
 **Status Codes:**
 
 * `200`: configuration was returned.
+* `400`: configuration not found or unable to read.
 
 **Response Body:**
 
-* `branchPattern`: pattern to match branches against. The *SearchBinaries* and *SearchUnicode* checks use this.
-* `namePattern`: pattern to match the commiter and author names against. The *CheckCommitAuthor* check uses this.
-* `emailPattern`: pattern to match the commiter and author emails against. The *CheckCommitAuthor* check uses this.
+* `checkName`: the name of the check.
+* `config`: a configuration object specific for each check. Here is a list of possible values:
+  * `branchPattern`: pattern to match branches against. The *SearchBinaries* and *SearchUnicode* checks use this.
+  * `namePattern`: pattern to match the commiter and author names against. The *CheckCommitAuthor* check uses this.
+  * `emailPattern`: pattern to match the commiter and author emails against. The *CheckCommitAuthor* check uses this.
+  * `filesizeThresholdByte`: Amout of bytes that a file should have maximum to trigger this check. The *SearchBigFiles* check uses this.
 
 *Example:*
 
 ```json
 {
-    "branchPattern": "refs/remotes/origin/main|.*v\\d+",
-    "namePattern": ".*",
-    "emailPattern": ".*@shady.com"
+    "checkName": "SearchBigFiles",
+    "config": {
+        "branchPattern": ".*origin/master",
+        "filesizeThresholdByte": 89234
+    }
 }
 ```
 
-### PUT /api/v1/config - Set the application configuration
+### PUT /api/v1/config - Set the configuration for a check
 
 **Status Codes:**
 
@@ -241,17 +253,22 @@ When started in server mode *gitscanner* will provide the following endpoints:
 
 **Request Body:**
 
-* `branchPattern`: regex pattern to match branches against. The *SearchBinaries* and *SearchUnicode* checks use this.
-* `namePattern`: regex pattern to match the commiter and author names against. The *CheckCommitAuthor* check uses this.
-* `emailPattern`: regex pattern to match the commiter and author emails against. The *CheckCommitAuthor* check uses this.
+* `checkName`: the name of the check.
+* `config`: a configuration object specific for each check. Here is a list of possible values:
+  * `branchPattern`: pattern to match branches against. The *SearchBinaries* and *SearchUnicode* checks use this.
+  * `namePattern`: pattern to match the commiter and author names against. The *CheckCommitAuthor* check uses this.
+  * `emailPattern`: pattern to match the commiter and author emails against. The *CheckCommitAuthor* check uses this.
+  * `filesizeThresholdByte`: Amout of bytes that a file should have maximum to trigger this check. The *SearchBigFiles* check uses this.
 
 *Example:*
 
 ```json
 {
-    "branchPattern": "refs/remotes/origin/main|.*v\\d+",
-    "namePattern": ".*",
-    "emailPattern": ".*@shady.com"
+    "checkName": "CheckCommitAuthor",
+    "config": {
+        "namePattern": "MrWong99",
+        "emailPattern": ".*@cool.com|.*@nice.eu"
+    }
 }
 ```
 
@@ -297,7 +314,7 @@ When started in server mode *gitscanner* will provide the following endpoints:
 }
 ```
 
-### GET /api/v1/checks?from=<unix millis>&to=<unix millis>&checkNames=<stringArr> - Retrieve previously performed checks that are stored in DB
+### GET /api/v1/checks?from={from}&to={to}&checkNames={checkNames} - Retrieve previously performed checks that are stored in DB
 
 **Status Codes:**
 

@@ -43,7 +43,10 @@ func (bins *UnicodeCharacterSearch) GetConfig() *checks.CheckConfiguration {
 }
 
 func (bins *UnicodeCharacterSearch) SetConfig(c *checks.CheckConfiguration) error {
-	cfg := c.GetConfig()
+	cfg, err := c.ParseConfigMap()
+	if err != nil {
+		return err
+	}
 	pat, ok := cfg["branchPattern"]
 	if !ok {
 		return errors.New("Given configuration for '" + bins.String() + "' did not contain mandatory config 'branchPattern'!")
@@ -61,7 +64,7 @@ func (bins *UnicodeCharacterSearch) SetConfig(c *checks.CheckConfiguration) erro
 }
 
 func (bins *UnicodeCharacterSearch) getPat() *regexp.Regexp {
-	pat, ok := bins.cfg.GetConfig()["branchPattern"]
+	pat, ok := bins.cfg.MustParseConfigMap()["branchPattern"]
 	if !ok {
 		return regexp.MustCompile(".*")
 	}
@@ -107,7 +110,7 @@ func (check *UnicodeCharacterSearch) Check(wrapRepo *mygit.ClonedRepo, output ch
 func getAdditionalInfo(f *object.File, illegalChar rune) datatypes.JSON {
 	return datatypes.JSON([]byte(`{"filesize": "` + utils.ByteCountDecimal(f.Size) +
 		`", "filemode": "` + f.Mode.String() +
-		`", "character": "` + strconv.QuoteRuneToASCII(illegalChar) + `"}`))
+		`", "character": "` + strings.ReplaceAll(strconv.QuoteRuneToASCII(illegalChar), "\\", "\\\\") + `"}`))
 }
 
 func (check *UnicodeCharacterSearch) searchForIllegal(t *object.Tree, repo *mygit.ClonedRepo, branchRef *plumbing.Reference, output chan<- utils.SingleCheck) {

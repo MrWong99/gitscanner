@@ -2,6 +2,7 @@ package filesize
 
 import (
 	"errors"
+	"math"
 	"regexp"
 
 	"github.com/MrWong99/gitscanner/checks"
@@ -25,7 +26,10 @@ func (bins *FilesizeSearchCheck) GetConfig() *checks.CheckConfiguration {
 }
 
 func (bins *FilesizeSearchCheck) SetConfig(c *checks.CheckConfiguration) error {
-	cfg := c.GetConfig()
+	cfg, err := c.ParseConfigMap()
+	if err != nil {
+		return err
+	}
 	pat, ok := cfg["branchPattern"]
 	if !ok {
 		return errors.New("Given configuration for '" + bins.String() + "' did not contain mandatory config 'branchPattern'!")
@@ -35,7 +39,7 @@ func (bins *FilesizeSearchCheck) SetConfig(c *checks.CheckConfiguration) error {
 		return errors.New("Given configuration for '" + bins.String() + "' did not contain mandatory config 'filesizeThresholdByte'!")
 	}
 	switch threshold.(type) {
-	case int, int8, int16, int32, int64:
+	case int, int8, int16, int32, int64, float32, float64:
 	default:
 		return errors.New("Given configuration for '" + bins.String() + "' didn't have a int as 'filesizeThresholdByte'!")
 	}
@@ -52,7 +56,7 @@ func (bins *FilesizeSearchCheck) SetConfig(c *checks.CheckConfiguration) error {
 }
 
 func (bins *FilesizeSearchCheck) getPat() *regexp.Regexp {
-	pat, ok := bins.cfg.GetConfig()["branchPattern"]
+	pat, ok := bins.cfg.MustParseConfigMap()["branchPattern"]
 	if !ok {
 		return regexp.MustCompile(".*")
 	}
@@ -65,7 +69,7 @@ func (bins *FilesizeSearchCheck) getPat() *regexp.Regexp {
 }
 
 func (bins *FilesizeSearchCheck) getThreshold() int64 {
-	threshold, ok := bins.cfg.GetConfig()["filesizeThresholdByte"]
+	threshold, ok := bins.cfg.MustParseConfigMap()["filesizeThresholdByte"]
 	if !ok {
 		return 81920 // 80 KB
 	}
@@ -80,6 +84,10 @@ func (bins *FilesizeSearchCheck) getThreshold() int64 {
 		return int64(thInt)
 	case int64:
 		return thInt
+	case float32:
+		return int64(math.Trunc(float64(thInt)))
+	case float64:
+		return int64(math.Trunc(thInt))
 	default:
 		return 81920 // 80 KB
 	}

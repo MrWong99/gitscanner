@@ -37,20 +37,21 @@ func main() {
 	password := flag.String("password", "", "An optional password for http basic auth.")
 	privateKeyFile := flag.String("ssh-private-key-file", "", "An optional path to a SSH private key file in PEM format.")
 	keyPassword := flag.String("ssh-private-key-password", "", "An optional password if the given private key file is encrypted.")
-	branchPattern := flag.String("branch-pattern", "", "Optional pattern to match refs against. Only matches will be processed in checks that rely on refs.")
-	namePattern := flag.String("name-pattern", "", "Pattern to match all commiter and author names against. This will be used for the commitmeta.CheckCommits check.")
-	emailPattern := flag.String("email-pattern", "", "Pattern to match all commiter and author emails against. This will be used for the commitmeta.CheckCommits check.")
+	branchPattern := flag.String("branch-pattern", ".*", "Optional pattern to match refs against. Only matches will be processed in checks that rely on refs.")
+	namePattern := flag.String("name-pattern", ".*", "Pattern to match all commiter and author names against. This will be used for the commitmeta.CheckCommits check.")
+	emailPattern := flag.String("email-pattern", ".*", "Pattern to match all commiter and author emails against. This will be used for the commitmeta.CheckCommits check.")
+	filesizeThreshold := flag.Int64("filesize-threshold-bytes", 81920, "Amout of bytes that a file should have maximum to trigger this check.")
 	port := flag.Int("port", -1, "When provided this will startup a webserver including ui that can be used to perform the checks via browser.")
 	sslKeyFile := flag.String("ssl-private-key-file", "", "An optional path to a TLS private key file in PEM format to enable HTTPS. Only used when port is set.")
 	sslCertFile := flag.String("ssl-certificate-chain-file", "", "An optional path to a TLS certificate (chain) in PEM format to enable HTTPS. Only used when port is set.")
 	flag.Parse()
 
-	saveConfigToDB(branchPattern, namePattern, emailPattern)
-
 	checks.AddCheck(&binaryfile.BinarySearchCheck{})
 	checks.AddCheck(&commitmeta.CommitMetaInfoCheck{})
 	checks.AddCheck(&unicode.UnicodeCharacterSearch{})
 	checks.AddCheck(&filesize.FilesizeSearchCheck{})
+
+	saveConfigToDB(branchPattern, namePattern, emailPattern, filesizeThreshold)
 
 	if *repositoryPaths == "" && *port < 1 {
 		log.Println("No repositories defined!")
@@ -110,7 +111,7 @@ func main() {
 	}
 }
 
-func saveConfigToDB(branchPattern, namePattern, emailPattern *string) {
+func saveConfigToDB(branchPattern, namePattern, emailPattern *string, filesizeThreshold *int64) {
 	var err error
 
 	err = db.InitDb()
@@ -132,32 +133,57 @@ func saveConfigToDB(branchPattern, namePattern, emailPattern *string) {
 		os.Exit(1)
 	}
 
-	var currentCfg *utils.GlobalConfig
+	for _, check := range checks.RepoChecks {
+		configurableCheck, configurable := check.(checks.ConfigurableChecker)
+		if !configurable {
+			continue
+		}
 
-	currentCfg, err = configrepo.ReadConfig()
-	if err != nil {
-		log.Printf("Error while reading config from database: %v\n", err)
-	}
-	if currentCfg == nil {
-		currentCfg = &utils.GlobalConfig{
-			BranchPattern: *branchPattern,
-			NamePattern:   *namePattern,
-			EmailPattern:  *emailPattern,
+		var currentCfg *checks.CheckConfiguration
+
+		currentCfg, err = configrepo.ReadConfig(configurableCheck.String())
+		if err != nil {
+			log.Printf("Error while reading config '%s' from database: %v\n", check.String(), err)
 		}
-	} else {
-		if *branchPattern != "" {
-			currentCfg.BranchPattern = *branchPattern
+		if currentCfg != nil {
+			configurableCheck.SetConfig(currentCfg)
+			continue
 		}
-		if *namePattern != "" {
-			currentCfg.NamePattern = *namePattern
+		newCfg := &checks.CheckConfiguration{
+			CheckName: configurableCheck.String(),
 		}
-		if *emailPattern != "" {
-			currentCfg.EmailPattern = *emailPattern
+		var err error
+		switch configurableCheck.String() {
+		case "SearchBinaries":
+			err = newCfg.SetConfigMap(map[string]interface{}{
+				"branchPattern": *branchPattern,
+			})
+		case "CheckCommitMetaInformation":
+			err = newCfg.SetConfigMap(map[string]interface{}{
+				"emailPattern": *emailPattern,
+				"namePattern":  *namePattern,
+			})
+		case "SearchBigFiles":
+			err = newCfg.SetConfigMap(map[string]interface{}{
+				"branchPattern":         *branchPattern,
+				"filesizeThresholdByte": *filesizeThreshold,
+			})
+		case "SearchIllegalUnicodeCharacters":
+			err = newCfg.SetConfigMap(map[string]interface{}{
+				"branchPattern": *branchPattern,
+			})
+		default:
+			log.Printf("Error while updating config for check '%s': Name not registered in saveConfigToDB.\n", configurableCheck.String())
 		}
-	}
-	err = configrepo.UpdateConfig(currentCfg)
-	if err != nil {
-		log.Printf("Error while updating config in database: %v\n", err)
-		os.Exit(1)
+		if err != nil {
+			log.Printf("Error while updating config for check '%s': %v\n", configurableCheck.String(), err)
+			continue
+		}
+		configurableCheck.SetConfig(newCfg)
+		err = configrepo.UpdateConfig(newCfg)
+		if err != nil {
+			log.Printf("Error while updating config in database: %v\n", err)
+			os.Exit(1)
+		}
 	}
 }

@@ -25,7 +25,10 @@ func (bins *BinarySearchCheck) GetConfig() *checks.CheckConfiguration {
 }
 
 func (bins *BinarySearchCheck) SetConfig(c *checks.CheckConfiguration) error {
-	cfg := c.GetConfig()
+	cfg, err := c.ParseConfigMap()
+	if err != nil {
+		return err
+	}
 	pat, ok := cfg["branchPattern"]
 	if !ok {
 		return errors.New("Given configuration for '" + bins.String() + "' did not contain mandatory config 'branchPattern'!")
@@ -43,7 +46,7 @@ func (bins *BinarySearchCheck) SetConfig(c *checks.CheckConfiguration) error {
 }
 
 func (bins *BinarySearchCheck) getPat() *regexp.Regexp {
-	pat, ok := bins.cfg.GetConfig()["branchPattern"]
+	pat, ok := bins.cfg.MustParseConfigMap()["branchPattern"]
 	if !ok {
 		return regexp.MustCompile(".*")
 	}

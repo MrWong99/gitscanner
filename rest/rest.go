@@ -19,7 +19,7 @@ import (
 
 func InitRouter(router *mux.Router) {
 	router.HandleFunc("/api/v1/checkRepos", handleCheckRequest).Methods("POST")
-	router.HandleFunc("/api/v1/config", handleGetConfig).Methods("GET")
+	router.HandleFunc("/api/v1/config/{checkName}", handleGetConfig).Methods("GET")
 	router.HandleFunc("/api/v1/config", handlePutConfig).Methods("PUT")
 	router.HandleFunc("/api/v1/config/sshkey", handlePutSshKey).Methods("PUT")
 	router.HandleFunc("/api/v1/config/basicauth", handlePutBasicAuth).Methods("PUT")
@@ -72,16 +72,21 @@ func handleCheckRequest(w http.ResponseWriter, r *http.Request) {
 		w.Write([]byte(err.Error()))
 		return
 	}
-	json.NewEncoder(w).Encode(checks)
+	err = json.NewEncoder(w).Encode(checks)
+	if err != nil {
+		log.Printf("Error encoding response: %v", err)
+	}
 }
 
-// GET /api/v1/config
+// GET /api/v1/config/{checkName}
 func handleGetConfig(w http.ResponseWriter, r *http.Request) {
+	vars := mux.Vars(r)
+	checkName := vars["checkName"]
 	w.Header().Add("Content-Type", "application/json")
-	cfg, err := configrepo.ReadConfig()
+	cfg, err := checks.GetCurrentConfig(checkName)
 	if err != nil {
 		log.Println(err)
-		w.WriteHeader(500)
+		w.WriteHeader(400)
 		w.Write([]byte(err.Error()))
 		return
 	}
@@ -97,20 +102,21 @@ func handlePutConfig(w http.ResponseWriter, r *http.Request) {
 		w.WriteHeader(400)
 		return
 	}
-	var request utils.GlobalConfig
+	var request checks.CheckConfiguration
 	err = json.Unmarshal(body, &request)
 	if err != nil {
 		log.Println(err)
 		w.WriteHeader(400)
 		return
 	}
-	err = updateConfig(&request)
+	err = checks.Configure(&request)
 	if err != nil {
 		log.Println(err)
 		w.WriteHeader(400)
 		w.Write([]byte(err.Error()))
 		return
 	} else {
+		configrepo.UpdateConfig(&request)
 		w.WriteHeader(200)
 	}
 }
@@ -227,21 +233,6 @@ func handleRetrieveChecksByDate(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	json.NewEncoder(w).Encode(checks)
-}
-
-func updateConfig(cfg *utils.GlobalConfig) error {
-	var err error
-	if _, err = utils.ExtractPattern(cfg.BranchPattern); err != nil {
-		return err
-	}
-	if _, err = utils.ExtractPattern(cfg.NamePattern); err != nil {
-		return err
-	}
-	if _, err = utils.ExtractPattern(cfg.EmailPattern); err != nil {
-		return err
-	}
-	err = configrepo.UpdateConfig(cfg)
-	return err
 }
 
 func updateSshKey(keyInfo *SshPrivateKeyInfo) error {

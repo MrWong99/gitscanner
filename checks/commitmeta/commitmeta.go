@@ -4,6 +4,7 @@ import (
 	"errors"
 	"regexp"
 	"strconv"
+	"strings"
 
 	"github.com/MrWong99/gitscanner/checks"
 	mygit "github.com/MrWong99/gitscanner/git"
@@ -25,7 +26,10 @@ func (bins *CommitMetaInfoCheck) GetConfig() *checks.CheckConfiguration {
 }
 
 func (bins *CommitMetaInfoCheck) SetConfig(c *checks.CheckConfiguration) error {
-	cfg := c.GetConfig()
+	cfg, err := c.ParseConfigMap()
+	if err != nil {
+		return err
+	}
 	pat, ok := cfg["emailPattern"]
 	if !ok {
 		return errors.New("Given configuration for '" + bins.String() + "' did not contain mandatory config 'emailPattern'!")
@@ -55,7 +59,7 @@ func (bins *CommitMetaInfoCheck) SetConfig(c *checks.CheckConfiguration) error {
 }
 
 func (bins *CommitMetaInfoCheck) getPat(name string) *regexp.Regexp {
-	pat, ok := bins.cfg.GetConfig()[name]
+	pat, ok := bins.cfg.MustParseConfigMap()[name]
 	if !ok {
 		return regexp.MustCompile(".*")
 	}
@@ -90,7 +94,7 @@ func (check *CommitMetaInfoCheck) Check(wrapRepo *mygit.ClonedRepo, output chan<
 }
 
 func getAdditionalInfo(c *object.Commit) datatypes.JSON {
-	return datatypes.JSON([]byte(`{"commitMessage": "` + c.Message +
+	return datatypes.JSON([]byte(`{"commitMessage": "` + strings.ReplaceAll(c.Message, "\n", "") +
 		`", "authorName": "` + c.Author.Name +
 		`", "authorEmail": "` + c.Author.Email +
 		`", "commiterName": "` + c.Committer.Name +

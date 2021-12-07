@@ -2,6 +2,7 @@ package checks
 
 import (
 	"encoding/json"
+	"errors"
 	"fmt"
 	"log"
 	"sync"
@@ -14,26 +15,38 @@ import (
 )
 
 type CheckConfiguration struct {
-	ID        uint           `json:"-" gorm:"primarykey"`
+	CheckName string         `json:"checkName" gorm:"primaryKey"`
 	Config    datatypes.JSON `json:"config"`
 	CreatedAt time.Time      `json:"-"`
 	UpdatedAt time.Time      `json:"-"`
 	DeletedAt gorm.DeletedAt `json:"-" gorm:"index"`
 }
 
-func (config *CheckConfiguration) GetConfig() map[string]interface{} {
-	var result map[string]interface{}
-	json.Unmarshal(config.Config, &result)
-	return result
-}
-
-func (config *CheckConfiguration) SetConfig(c map[string]interface{}) error {
-	res, err := json.Marshal(c)
+func (config *CheckConfiguration) SetConfigMap(cMap map[string]interface{}) error {
+	cfg, err := json.Marshal(&cMap)
 	if err != nil {
 		return err
 	}
-	config.Config = res
+	config.Config = cfg
 	return nil
+}
+
+func (config *CheckConfiguration) ParseConfigMap() (map[string]interface{}, error) {
+	var result map[string]interface{}
+	err := json.Unmarshal(config.Config, &result)
+	if err != nil {
+		return nil, err
+	}
+	return result, nil
+}
+
+func (config *CheckConfiguration) MustParseConfigMap() map[string]interface{} {
+	var result map[string]interface{}
+	err := json.Unmarshal(config.Config, &result)
+	if err != nil {
+		panic(err)
+	}
+	return result
 }
 
 type Checker interface {
@@ -72,6 +85,34 @@ func CheckAllRepositoriesSpecificChecks(repos, checks []string) []*utils.CheckRe
 		results = append(results, consolidateChecks(path, checkFns))
 	}
 	return results
+}
+
+func Configure(config *CheckConfiguration) error {
+	for _, check := range RepoChecks {
+		if check.String() == config.CheckName {
+			switch ctype := check.(type) {
+			case ConfigurableChecker:
+				return ctype.SetConfig(config)
+			default:
+				return errors.New("Check '" + config.CheckName + "' is not configurable.")
+			}
+		}
+	}
+	return errors.New("A check with name '" + config.CheckName + "' is not registered.")
+}
+
+func GetCurrentConfig(checkname string) (*CheckConfiguration, error) {
+	for _, check := range RepoChecks {
+		if check.String() == checkname {
+			switch ctype := check.(type) {
+			case ConfigurableChecker:
+				return ctype.GetConfig(), nil
+			default:
+				return nil, errors.New("Check '" + checkname + "' is not configurable.")
+			}
+		}
+	}
+	return nil, errors.New("A check with name '" + checkname + "' is not registered.")
 }
 
 func matchingChecks(checkNames []string) []Checker {

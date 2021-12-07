@@ -1,6 +1,7 @@
 package db
 
 import (
+	"github.com/MrWong99/gitscanner/checks"
 	"github.com/MrWong99/gitscanner/utils"
 	"gorm.io/driver/sqlite"
 	"gorm.io/gorm"
@@ -21,7 +22,7 @@ func InitDb() error {
 	if err = db.AutoMigrate(&utils.SingleCheck{}); err != nil {
 		return err
 	}
-	if err = db.AutoMigrate(&utils.GlobalConfig{}); err != nil {
+	if err = db.AutoMigrate(&checks.CheckConfiguration{}); err != nil {
 		return err
 	}
 	return nil

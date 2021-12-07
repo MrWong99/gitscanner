@@ -3,14 +3,14 @@ package configrepo
 import (
 	"errors"
 
+	"github.com/MrWong99/gitscanner/checks"
 	"github.com/MrWong99/gitscanner/db"
-	"github.com/MrWong99/gitscanner/utils"
 	"gorm.io/gorm"
 )
 
-func ReadConfig() (*utils.GlobalConfig, error) {
-	config := &utils.GlobalConfig{}
-	tx := db.Get().First(config)
+func ReadConfig(checkname string) (*checks.CheckConfiguration, error) {
+	config := &checks.CheckConfiguration{}
+	tx := db.Get().Where("check_name = ?", checkname).First(config)
 	if tx.Error != nil {
 		if errors.Is(tx.Error, gorm.ErrRecordNotFound) {
 			return nil, nil
@@ -21,18 +21,7 @@ func ReadConfig() (*utils.GlobalConfig, error) {
 	return config, nil
 }
 
-func UpdateConfig(cfg *utils.GlobalConfig) error {
-	currentCfg, err := ReadConfig()
-	if err != nil {
-		return err
-	}
-	if currentCfg == nil {
-		tx := db.Get().Create(cfg)
-		return tx.Error
-	}
-	currentCfg.BranchPattern = cfg.BranchPattern
-	currentCfg.NamePattern = cfg.EmailPattern
-	currentCfg.NamePattern = cfg.NamePattern
-	tx := db.Get().Save(currentCfg)
+func UpdateConfig(cfg *checks.CheckConfiguration) error {
+	tx := db.Get().Save(cfg)
 	return tx.Error
 }

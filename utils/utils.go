@@ -12,16 +12,6 @@ import (
 	"gorm.io/gorm"
 )
 
-type GlobalConfig struct {
-	ID            uint           `json:"-" gorm:"primarykey"`
-	BranchPattern string         `json:"branchPattern"`
-	NamePattern   string         `json:"namePattern"`
-	EmailPattern  string         `json:"emailPattern"`
-	CreatedAt     time.Time      `json:"-"`
-	UpdatedAt     time.Time      `json:"-"`
-	DeletedAt     gorm.DeletedAt `json:"-" gorm:"index"`
-}
-
 type SingleCheck struct {
 	ID                        uint           `json:"id" gorm:"primarykey"`
 	Origin                    string         `json:"origin"`
