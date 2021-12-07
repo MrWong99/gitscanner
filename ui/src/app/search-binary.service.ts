@@ -19,6 +19,17 @@ export interface FileData {
   checks: Checks[]
 }
 
+export interface CheckConfig {
+  checkName: string,
+  config: {
+    branchPattern?: string,
+    emailPattern?: string,
+    namePattern?: string,
+    filesizeThresholdByte?: number
+    commitSizeThresholdByte?: number
+  }
+}
+
 interface Checks {
   origin: string,
   branch: string,
@@ -90,5 +101,33 @@ export class SearchBinaryService {
     params.append('to', toDate.toString());
     params.append('checkNames', checks);
     return this.httpClient.get<FileData[]>(this.baseUrl + 'checks', {params: params});
+  }
+
+  /**
+   * Get currently set configuration for given check.
+   * @param checkName The name of the check.
+   * @returns The check configuration.
+   */
+  getCheckConfiguration(checkName: string): Observable<CheckConfig> {
+    return this.httpClient.get<CheckConfig>(this.baseUrl + 'config/' + checkName);
+  }
+
+  /**
+   * Update the configuration for given check.
+   * @param config The configuration to set.
+   * @returns observable with a status.
+   */
+  setCheckConfiguration(config: CheckConfig): Observable<any> {
+    let headers = new HttpHeaders();
+    headers.set('Content-Type', 'application/json');
+    return this.httpClient.put<any>(this.baseUrl + 'config', config, {headers: headers});
+  }
+
+  /**
+   * Get list of all available check names.
+   * @returns A list of strings with all available check names.
+   */
+  getAvailableCheckNames(): Observable<string[]> {
+    return this.httpClient.get<string[]>(this.baseUrl + 'checkDefinitions');
   }
 }
