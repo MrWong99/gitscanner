@@ -146,6 +146,7 @@ When started in server mode *gitscanner* will provide the following endpoints:
                     "commitMessage": "Table view (in progress...)\n",
                     "commiterEmail": "shady.dude@inter.net",
                     "commiterName": "jeffHacker",
+                    "commitSize": "1.2 TB",
                     "numberOfParents": 1
                 }
             },
@@ -231,6 +232,7 @@ When started in server mode *gitscanner* will provide the following endpoints:
   * `namePattern`: pattern to match the commiter and author names against. The *CheckCommitMetaInformation* check uses this.
   * `emailPattern`: pattern to match the commiter and author emails against. The *CheckCommitMetaInformation* check uses this.
   * `filesizeThresholdByte`: Amout of bytes that a file should have maximum to trigger this check. The *SearchBigFiles* check uses this.
+  * `commitSizeThresholdByte`: Amout of bytes that a file should have maximum to trigger this check. The *CheckCommitMetaInformation* check uses this.
 
 *Example:*
 

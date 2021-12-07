@@ -37,6 +37,7 @@
                         <th *ngIf="isCommitSearch()" pSortableColumn="commiterEmail">Commiter Email <p-sortIcon field="commiterEmail"></p-sortIcon></th>
                         <th *ngIf="isCommitSearch()" pSortableColumn="commitMessage">Commit Message <p-sortIcon field="commitMessage"></p-sortIcon></th>
                         <th *ngIf="isCommitSearch()" pSortableColumn="commiterName">Commiter Name <p-sortIcon field="commiterName"></p-sortIcon></th>
+                        <th *ngIf="isCommitSearch()" pSortableColumn="commitSize">Commit Size <p-sortIcon field="commitSize"></p-sortIcon></th>
                         <th *ngIf="isBinariesSearch() || isUnicodeSearch() || isBigFileSearch()" pSortableColumn="filemode">File Mode <p-sortIcon field="filemode"></p-sortIcon></th>
                         <th *ngIf="isBinariesSearch() || isUnicodeSearch() || isBigFileSearch()" pSortableColumn="filesize">File Size <p-sortIcon field="filesize"></p-sortIcon></th>
                         <th *ngIf="isCommitSearch()" pSortableColumn="numberOfParents">Number of Parents <p-sortIcon field="numberOfParents"></p-sortIcon></th>
@@ -54,6 +55,7 @@
                         <td *ngIf="isCommitSearch()">{{data.commiterEmail}}</td>
                         <td *ngIf="isCommitSearch()">{{data.commitMessage}}</td>
                         <td *ngIf="isCommitSearch()">{{data.commiterName}}</td>
+                        <td *ngIf="isCommitSearch()">{{data.commitSize}}</td>
                         <td *ngIf="isBinariesSearch() || isUnicodeSearch() || isBigFileSearch()">{{data.filemode}}</td>
                         <td *ngIf="isBinariesSearch() || isUnicodeSearch() || isBigFileSearch()">{{data.filesize}}</td>
                         <td *ngIf="isCommitSearch()">{{data.numberOfParents}}</td>

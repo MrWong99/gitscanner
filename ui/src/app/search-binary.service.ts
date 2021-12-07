@@ -34,6 +34,7 @@ interface AdditionalInfo {
   commitMessage?: string,
   commiterEmail?: string,
   commiterName?: string,
+  commitSize?: string,
   filemode?: string,
   filesize?: string,
   numberOfParents?: number
