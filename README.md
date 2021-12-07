@@ -227,9 +227,9 @@ When started in server mode *gitscanner* will provide the following endpoints:
 
 * `checkName`: the name of the check.
 * `config`: a configuration object specific for each check. Here is a list of possible values:
-  * `branchPattern`: pattern to match branches against. The *SearchBinaries* and *SearchUnicode* checks use this.
-  * `namePattern`: pattern to match the commiter and author names against. The *CheckCommitAuthor* check uses this.
-  * `emailPattern`: pattern to match the commiter and author emails against. The *CheckCommitAuthor* check uses this.
+  * `branchPattern`: pattern to match branches against. The *SearchBinaries* and *SearchIllegalUnicodeCharacters* checks use this.
+  * `namePattern`: pattern to match the commiter and author names against. The *CheckCommitMetaInformation* check uses this.
+  * `emailPattern`: pattern to match the commiter and author emails against. The *CheckCommitMetaInformation* check uses this.
   * `filesizeThresholdByte`: Amout of bytes that a file should have maximum to trigger this check. The *SearchBigFiles* check uses this.
 
 *Example:*
@@ -255,16 +255,16 @@ When started in server mode *gitscanner* will provide the following endpoints:
 
 * `checkName`: the name of the check.
 * `config`: a configuration object specific for each check. Here is a list of possible values:
-  * `branchPattern`: pattern to match branches against. The *SearchBinaries* and *SearchUnicode* checks use this.
-  * `namePattern`: pattern to match the commiter and author names against. The *CheckCommitAuthor* check uses this.
-  * `emailPattern`: pattern to match the commiter and author emails against. The *CheckCommitAuthor* check uses this.
+  * `branchPattern`: pattern to match branches against. The *SearchBinaries* and *SearchIllegalUnicodeCharacters* checks use this.
+  * `namePattern`: pattern to match the commiter and author names against. The *CheckCommitMetaInformation* check uses this.
+  * `emailPattern`: pattern to match the commiter and author emails against. The *CheckCommitMetaInformation* check uses this.
   * `filesizeThresholdByte`: Amout of bytes that a file should have maximum to trigger this check. The *SearchBigFiles* check uses this.
 
 *Example:*
 
 ```json
 {
-    "checkName": "CheckCommitAuthor",
+    "checkName": "CheckCommitMetaInformation",
     "config": {
         "namePattern": "MrWong99",
         "emailPattern": ".*@cool.com|.*@nice.eu"
