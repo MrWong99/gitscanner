@@ -93,5 +93,12 @@ func (check *BinarySearchCheck) Check(wrapRepo *mygit.ClonedRepo, output chan<- 
 }
 
 func getAdditionalInfo(f *object.File) datatypes.JSON {
-	return datatypes.JSON([]byte(`{"filesize": "` + utils.ByteCountDecimal(f.Size) + `", "filemode": "` + f.Mode.String() + `"}`))
+	bytes, err := json.Marshal(map[string]interface{}{
+		"filesize": utils.ByteCountDecimal(f.Size),
+		"filemode": f.Mode.String(),
+	})
+	if err != nil {
+		return datatypes.JSONF([]byte(`{"err": "` + strings.ReplaceAll(err.Error(), "\\", "\\\\") + `"}`)
+	}
+	return datatypes.JSON(bytes)
 }
