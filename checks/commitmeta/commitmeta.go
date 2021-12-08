@@ -2,6 +2,7 @@ package commitmeta
 
 import (
 	"errors"
+	"encoding/json"
 	"math"
 	"regexp"
 	"strconv"
@@ -138,13 +139,19 @@ func (check *CommitMetaInfoCheck) Check(wrapRepo *mygit.ClonedRepo, output chan<
 }
 
 func getAdditionalInfo(c *object.Commit, commitSize int64) datatypes.JSON {
-	return datatypes.JSON([]byte(`{"commitMessage": "` + strings.ReplaceAll(c.Message, "\n", "") +
-		`", "authorName": "` + c.Author.Name +
-		`", "authorEmail": "` + c.Author.Email +
-		`", "commiterName": "` + c.Committer.Name +
-		`", "commiterEmail": "` + c.Committer.Email +
-		`", "commitSize": "` + utils.ByteCountDecimal(commitSize) +
-		`", "numberOfParents": ` + strconv.Itoa(c.NumParents()) + `}`))
+	bytes, err := json.Marshal(map[string]interface{}{
+		"commitMessage": c.Message,
+		"authorName": c.Author.Name,
+		"authorEmail": c.Author.Email,
+		"commiterName": c.Committer.Name,
+		"commiterEmail": c.Committer.Email,
+		"commitSize": utils.ByteCountDecimal(commitSize),
+		"numberOfParents": strconv.Itoa(c.NumParents()),
+	})
+	if err != nil {
+		return datatypes.JSONF([]byte(`{"err": "` + strings.ReplaceAll(err.Error(), "\\", "\\\\") + `"}`)
+	}
+	return datatypes.JSON(bytes)
 }
 
 func getCommitSize(c *object.Commit) int64 {
