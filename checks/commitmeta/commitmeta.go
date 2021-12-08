@@ -149,7 +149,7 @@ func getAdditionalInfo(c *object.Commit, commitSize int64) datatypes.JSON {
 		"numberOfParents": strconv.Itoa(c.NumParents()),
 	})
 	if err != nil {
-		return datatypes.JSONF([]byte(`{"err": "` + strings.ReplaceAll(err.Error(), "\\", "\\\\") + `"}`)
+		return datatypes.JSON([]byte(`{"err": "` + strings.ReplaceAll(err.Error(), "\\", "\\\\") + `"}`))
 	}
 	return datatypes.JSON(bytes)
 }
