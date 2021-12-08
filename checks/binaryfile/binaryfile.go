@@ -4,6 +4,7 @@ import (
 	"errors"
 	"encoding/json"
 	"regexp"
+	"strings"
 
 	"github.com/MrWong99/gitscanner/checks"
 	mygit "github.com/MrWong99/gitscanner/git"
