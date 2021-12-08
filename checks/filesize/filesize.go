@@ -134,7 +134,7 @@ func getAdditionalInfo(f *object.File) datatypes.JSON {
 		"filemode": f.Mode.String(),
 	})
 	if err != nil {
-		return datatypes.JSONF([]byte(`{"err": "` + strings.ReplaceAll(err.Error(), "\\", "\\\\") + `"}`)
+		return datatypes.JSON([]byte(`{"err": "` + strings.ReplaceAll(err.Error(), "\\", "\\\\") + `"}`))
 	}
 	return datatypes.JSON(bytes)
 }
