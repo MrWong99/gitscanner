@@ -2,6 +2,7 @@ package binaryfile
 
 import (
 	"errors"
+	"encoding/json"
 	"regexp"
 
 	"github.com/MrWong99/gitscanner/checks"
