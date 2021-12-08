@@ -115,7 +115,7 @@ func getAdditionalInfo(f *object.File, illegalChar rune) datatypes.JSON {
 		"character": strings.ReplaceAll(strconv.QuoteRuneToASCII(illegalChar), "\\", "\\\\"),
 	})
 	if err != nil {
-		return datatypes.JSONF([]byte(`{"err": "` + strings.ReplaceAll(err.Error(), "\\", "\\\\") + `"}`)
+		return datatypes.JSON([]byte(`{"err": "` + strings.ReplaceAll(err.Error(), "\\", "\\\\") + `"}`))
 	}
 	return datatypes.JSON(bytes)
 }
