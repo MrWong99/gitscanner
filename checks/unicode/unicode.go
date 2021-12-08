@@ -2,6 +2,7 @@ package unicode
 
 import (
 	"errors"
+	"encoding/json"
 	"io/ioutil"
 	"log"
 	"regexp"
@@ -108,9 +109,15 @@ func (check *UnicodeCharacterSearch) Check(wrapRepo *mygit.ClonedRepo, output ch
 }
 
 func getAdditionalInfo(f *object.File, illegalChar rune) datatypes.JSON {
-	return datatypes.JSON([]byte(`{"filesize": "` + utils.ByteCountDecimal(f.Size) +
-		`", "filemode": "` + f.Mode.String() +
-		`", "character": "` + strings.ReplaceAll(strconv.QuoteRuneToASCII(illegalChar), "\\", "\\\\") + `"}`))
+	bytes, err := json.Marshal(map[string]interface{}{
+		"filesize": utils.ByteCountDecimal(f.Size),
+		"filemode": f.Mode.String(),
+		"character": strings.ReplaceAll(strconv.QuoteRuneToASCII(illegalChar), "\\", "\\\\"),
+	})
+	if err != nil {
+		return datatypes.JSONF([]byte(`{"err": "` + strings.ReplaceAll(err.Error(), "\\", "\\\\") + `"}`)
+	}
+	return datatypes.JSON(bytes)
 }
 
 func (check *UnicodeCharacterSearch) searchForIllegal(t *object.Tree, repo *mygit.ClonedRepo, branchRef *plumbing.Reference, output chan<- utils.SingleCheck) {
