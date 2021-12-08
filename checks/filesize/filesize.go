@@ -2,6 +2,7 @@ package filesize
 
 import (
 	"errors"
+	"encoding/json"
 	"math"
 	"regexp"
 
