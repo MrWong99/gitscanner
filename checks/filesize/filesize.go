@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"math"
 	"regexp"
+	"strings"
 
 	"github.com/MrWong99/gitscanner/checks"
 	mygit "github.com/MrWong99/gitscanner/git"
