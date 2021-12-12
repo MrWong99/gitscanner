@@ -20,6 +20,9 @@ jobs:
       with:
         node-version: 17
         registry-url: https://registry.npmjs.org/
+    
+    - name: Write version to file
+      run: echo "$GITHUB_REF_NAME" > VERSION
 
     - name: Set up Go
       uses: actions/setup-go@v2

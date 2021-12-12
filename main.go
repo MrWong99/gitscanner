@@ -28,6 +28,9 @@ import (
 //go:embed ui/dist/search-binary/*
 var embedUi embed.FS
 
+//go:embed VERSION
+var embedVersion string
+
 func main() {
 	log.SetOutput(os.Stderr)
 	repositoryPaths := flag.String("repositories", "",
@@ -87,10 +90,10 @@ func main() {
 		}
 		router.PathPrefix("/").Handler(http.FileServer(http.FS(files)))
 		if *sslKeyFile != "" && *sslCertFile != "" {
-			log.Printf("Starting webserver. Navigate to https://localhost:%d in your browser!\n", *port)
+			log.Printf("Starting gitscanner %s\nNavigate to https://localhost:%d in your browser!\n", embedVersion, *port)
 			err = http.ListenAndServeTLS(":"+strconv.Itoa(*port), *sslCertFile, *sslKeyFile, router)
 		} else {
-			log.Printf("Starting webserver. Navigate to http://localhost:%d in your browser!\n", *port)
+			log.Printf("Starting gitscanner %s\nNavigate to http://localhost:%d in your browser!\n", embedVersion, *port)
 			err = http.ListenAndServe(":"+strconv.Itoa(*port), router)
 		}
 		if err != nil {
