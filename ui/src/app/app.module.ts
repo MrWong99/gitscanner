@@ -10,6 +10,7 @@ import { ConfirmDialogModule } from 'primeng/confirmdialog';
 import { DialogModule } from 'primeng/dialog';
 import { InputTextModule } from 'primeng/inputtext';
 import { MessageService } from 'primeng/api';
+import { MultiSelectModule } from 'primeng/multiselect';
 import { ProgressSpinnerModule } from 'primeng/progressspinner';
 import { RadioButtonModule } from 'primeng/radiobutton';
 import { TableModule } from 'primeng/table';
@@ -36,6 +37,7 @@ import { ScanOverviewComponent } from './scan-overview/scan-overview.component';
     FormsModule,
     HttpClientModule,
     InputTextModule,
+    MultiSelectModule,
     ProgressSpinnerModule,
     RadioButtonModule,
     TableModule,

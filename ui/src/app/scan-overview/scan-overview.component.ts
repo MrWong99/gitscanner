@@ -1,4 +1,4 @@
-import { Component, OnChanges, Input, OnDestroy } from '@angular/core';
+import { Component, OnChanges, OnInit, Input, OnDestroy } from '@angular/core';
 import { Subscription } from 'rxjs';
 import { MessageService } from 'primeng/api';
 import { SearchBinaryService, FileData, Error } from '../search-binary.service';
@@ -13,15 +13,35 @@ export class ScanOverviewComponent implements OnChanges, OnDestroy {
 
   @Input() data: any;
   @Input() checkName: any;
+
   errors: Error[] = [];
   checks: any[] = [];
   flattenedData: any[] = [];
   updateAcknowledgedStatusSub: Subscription | undefined;
+  //cols: any[] = [];
+  //_selectedColumns: any[] = [];
 
   constructor(
     private messageService: MessageService,
     private searchBinaryService: SearchBinaryService) {
   }
+
+  /*ngOnInit() {
+    this.cols = [
+      { field: 'authorEmail', header: 'Author Email' },
+      { field: 'authorName', header: 'Author Name' },
+      { field: 'character', header: 'Character' },
+      { field: 'commiterEmail', header: 'Commiter Email' },
+      { field: 'commitMessage', header: 'Commit Message' },
+      { field: 'commiterName', header: 'Commiter Name' },
+      { field: 'commitSize', header: 'Commit Size' },
+      { field: 'filemode', header: 'File Mode' },
+      { field: 'filesize', header: 'File Size' },
+      { field: 'numberOfParents', header: 'Number Of Parents' }
+    ];
+
+    this.selectedColumns = this.cols;
+  }*/
 
   ngOnChanges() {
     // flatten the nested data object retrieved from the parent/backend
@@ -31,17 +51,31 @@ export class ScanOverviewComponent implements OnChanges, OnDestroy {
         repoCheck['checks'].forEach((check: any) => {
             let flattenedCheck = this.mapCheck(check)
             Object.keys(repoCheck).forEach(k => {
-                if (k != 'checks' && k != 'id') {
+                if (k !== 'checks' && k !== 'id') {
                   flattenedCheck[k] = repoCheck[k];
                 }
-            })
+            });
+            /*if (flattenedCheck['checkName'] === 'SearchBinaries') {
+              this.selectedColumns.push(this.cols[7]);
+              this.selectedColumns.push(this.cols[8]);
+            }*/
             result.push(flattenedCheck);
         });
       }
     });
     this.flattenedData = Object.assign([], result);
+    console.log(this.flattenedData);
     this.listErrors();
   }
+
+  /*@Input() get selectedColumns(): any[] {
+    return this._selectedColumns;
+  }
+
+  set selectedColumns(val: any[]) {
+      //restore original order
+      this._selectedColumns = this.cols.filter(col => val.includes(col));
+  }*/
 
   /**
    * Flatten a given check object.
@@ -63,11 +97,26 @@ export class ScanOverviewComponent implements OnChanges, OnDestroy {
   }
 
   /**
+   * Check if  selected check has any results to display.
+   * @param checkName the check name
+   * @returns true/false
+   */
+  hasResultData(checkName: string): number {
+    let hasData: number = 0;
+    this.flattenedData.forEach(data => {
+      if (data.checkName === checkName) {
+        hasData++;
+      }
+    });
+    return hasData;
+  }
+
+  /**
    * Check if is a binary search check.
    * @returns true/false
    */
   isBinariesSearch(): boolean {
-    return this.checkName.includes('SearchBinaries');
+    return this.checkName.includes('SearchBinaries') && this.hasResultData('SearchBinaries') > 0;
   }
 
    /**
@@ -75,7 +124,7 @@ export class ScanOverviewComponent implements OnChanges, OnDestroy {
    * @returns true/false
    */
   isUnicodeSearch(): boolean {
-    return this.checkName.includes('SearchIllegalUnicodeCharacters');
+    return this.checkName.includes('SearchIllegalUnicodeCharacters') && this.hasResultData('SearchIllegalUnicodeCharacters') > 0;
   }
 
    /**
@@ -83,7 +132,7 @@ export class ScanOverviewComponent implements OnChanges, OnDestroy {
    * @returns true/false
    */
   isCommitSearch(): boolean {
-    return this.checkName.includes('CheckCommitMetaInformation');
+    return this.checkName.includes('CheckCommitMetaInformation')  && this.hasResultData('CheckCommitMetaInformation') > 0;
   }
 
    /**
@@ -91,7 +140,7 @@ export class ScanOverviewComponent implements OnChanges, OnDestroy {
    * @returns true/false
    */
   isBigFileSearch(): boolean {
-    return this.checkName.includes('SearchBigFiles');
+    return this.checkName.includes('SearchBigFiles') && this.hasResultData('SearchBigFiles') > 0;
   }
 
   /**

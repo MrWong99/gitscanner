@@ -41,8 +41,8 @@ export class AppComponent implements OnInit, OnDestroy {
    * Open the scan config dialog.
    */
   openConfigDialog() {
-    this.fileData = [];
-    this.selectedCheckNames = [];
+    //this.fileData = [];
+    //this.selectedCheckNames = [];
     this.display = true;
     this.path = '';
     this.placeholder = 'https://github.com/grafana/loki,git@github.com/UserX/gitscanner.git,file://C:\\Users\\UserX\\myRepo';
@@ -60,6 +60,7 @@ export class AppComponent implements OnInit, OnDestroy {
    * Submit the scan config and perform scan.
    */
   submit() {
+    this.fileData = [];
     let selected: string[] = [];
     this.selectedCheckNames.forEach((entry) => {
       selected.push(entry.key);
