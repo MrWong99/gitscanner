@@ -84,9 +84,7 @@ func CloneRepo(url string) (*ClonedRepo, error) {
 
 func wrap(tmpPath string, repo *git.Repository, auth transport.AuthMethod, err error) (*ClonedRepo, error) {
 	if err != nil {
-		if !strings.HasPrefix(tmpPath, "file://") {
-			os.RemoveAll(tmpPath)
-		}
+		os.RemoveAll(tmpPath)
 		return nil, err
 	}
 	return &ClonedRepo{
