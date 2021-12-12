@@ -72,8 +72,10 @@ func CloneRepo(url string) (*ClonedRepo, error) {
 			Progress: os.Stderr,
 		})
 	} else if strings.HasPrefix(url, "file://") {
-		clonedPath = url
-		repo, err = git.PlainOpen(strings.TrimPrefix(url, "file://"))
+		repo, err = git.PlainClone(clonedPath, false, &git.CloneOptions{
+			URL:      url,
+			Progress: os.Stderr,
+		})
 	} else {
 		return nil, errors.New("Given url does not match any known url type: " + url)
 	}
@@ -82,9 +84,7 @@ func CloneRepo(url string) (*ClonedRepo, error) {
 
 func wrap(tmpPath string, repo *git.Repository, auth transport.AuthMethod, err error) (*ClonedRepo, error) {
 	if err != nil {
-		if !strings.HasPrefix(tmpPath, "file://") {
-			os.RemoveAll(tmpPath)
-		}
+		os.RemoveAll(tmpPath)
 		return nil, err
 	}
 	return &ClonedRepo{
