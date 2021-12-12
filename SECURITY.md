@@ -2,12 +2,7 @@
 
 ## Supported Versions
 
-These versions are currently being supported by security updates:
-
-| Version | Supported          |
-| ------- | ------------------ |
-| 2.2.x   | :white_check_mark: |
-| < 2.2   | :x:                |
+Only the latest MAJOR.MINOR version will get security fixes so make sure to always use the latest available version!
 
 ## Reporting a Vulnerability
 
