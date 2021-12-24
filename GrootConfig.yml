@@ -1,17 +1,42 @@
+# Any values in this configuration file (except numbers and booleans) can be encrypted using Base64 encoded AES-256.
+# Use the command
+# ./gitscanner -encrypt <input>
+# to encrypt any input.
+
+# General server configuration.
 server:
-    port: 16092
+  port: 16092                                 # The HTTP port to start the server on.
+  tls:                                        # When provided the endpoint will be using HTTPS.
+    certFile: /some/path/server.crt.pem       # Relative or absolute path of certificate (chain) in PEM format.
+    privateKeyFile: /some/path/server.key.pem # Relative or absolute path of private key in PEM format.
+
+# Authentication methods to use when cloning repositories via Git.
+auth:
+  ssh:
+    privateKeyFile: /home/myuser/.ssh/id_rsa  # SSH private key file to use when cloning repositories.
+    keyPassphrase: secr3t                     # Optional passphrase to decrypt the private key with.
+  basicAuth:
+    username: Mnaaz                           # Username for HTTP basic authentication.
+    password: v3ryS3cur4                      # Password for HTTP basic authentication.
+
+# Configuration for every configurable check.
 checks:
-    - name: CheckCommitMetaInformation
-      enabled: true
-      config:
-        commitSizeThresholdByte: 86457
-        emailPattern: .*
-        namePattern: .*
-    - name: SearchBinaries
-      enabled: false
-      config:
-        branchPattern: .*
-    - name: SearchIllegalUnicodeCharacters
-      enabled: true
-      config:
-        branchPattern: .*origin/develop
+  - name: CheckCommitMetaInformation # The name of the check.
+    enabled: true                    # If set to false this check is not allowed to be executed.
+    config:                          # This configuration section varies for each check.
+      commitSizeThresholdByte: 86457
+      emailPattern: .*@github.com|naazibu@gitlab.com
+      namePattern: .*
+  - name: SearchBinaries
+    enabled: false
+    config:
+      branchPattern: .*
+  - name: SearchIllegalUnicodeCharacters
+    enabled: true
+    config:
+      branchPattern: .*origin/develop
+  - name: SearchBigFiles
+    enabled: true
+    config:
+      branchPattern: .*origin/main|.*origin/feature_.*
+      filesizeThresholdByte: 86457

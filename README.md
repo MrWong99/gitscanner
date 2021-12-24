@@ -5,44 +5,27 @@ It relies heavily on [go-git](https://github.com/go-git/go-git).
 
 ## Usage
 
-To simply start the scanner as webservice configure a port to use and optionally (highly recommended) a TLS certificate (chain) and private key file:
+To simply start the scanner run this command and provide a configuration file:
 
-`./gitscanner -port 16092 -ssl-certificate-chain-file ~/.tls/my-cert-chain.crt.pem -ssl-private-key-file ~/.tls/tls.key.pem`
+`./gitscanner -config <path to config file>`
+
+Take a look at the [full configuration file](/GrootConfig.yml) for further configuration options.
 
 ![UI Example](/ui_example.png)
 
-If you instead just want to run in single execution mode with CLI don't provide any port and then refer to the possible configuration parameters:
+Here is the full list of available parameters:
 
 ```
 $ ./gitscanner --help
 Usage of ./gitscanner:
-  -branch-pattern string
-        Optional pattern to match refs against. Only matches will be processed in checks that rely on refs.
-  -email-pattern string
-        Pattern to match all commiter and author emails against. This will be used for the commitmeta.CheckCommits check.
-  -filesize-threshold-bytes int64
-        Amout of bytes that a file should have maximum to trigger this check. (default 81920)
-  -name-pattern string
-        Pattern to match all commiter and author names against. This will be used for the commitmeta.CheckCommits check.
-  -password string
-        An optional password for http basic auth.
-  -port int
-        When provided this will startup a webserver including ui that can be used to perform the checks via browser. (default -1)
-  -repositories string
-        A comma-separated list of repositories to perform checks against. Can be in these formats:
-        - http(s)://<remote URL>
-        - git@<remote URL>
-        - file://<path>
-  -ssh-private-key-file string
-        An optional path to a SSH private key file in PEM format.
-  -ssh-private-key-password string
-        An optional password if the given private key file is encrypted.
-  -ssl-certificate-chain-file string
-        An optional path to a TLS certificate (chain) in PEM format to enable HTTPS. Only used when port is set.
-  -ssl-private-key-file string
-        An optional path to a TLS private key file in PEM format to enable HTTPS. Only used when port is set.
-  -username string
-        An optional username for http basic auth.
+  -config string
+        The absolute or relative path of the application configuration file. (default "GrootConfig.yml")
+  -decrypt string
+        When set this tool will simply decrypt the given input and exit afterwards. Can be used to decrypt any value for the config file given the correct key.
+  -encrypt string
+        When set this tool will simply encrypt the given input and exit afterwards. Can be used to encrypt any value for the config file.
+  -encryptionKey string
+        Key to use for en-/decrypting sensitive data. Can also be provided via environment variable 'ENCRYPTION_KEY' or by typing into console after start.
 ```
 
 ## Performed checks

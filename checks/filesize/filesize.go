@@ -23,23 +23,19 @@ func (*FilesizeSearchCheck) String() string {
 }
 
 func (bins *FilesizeSearchCheck) GetConfig() map[string]interface{} {
-	return map[string]interface{}{
-		"branchPattern":         bins.getPat().String(),
-		"filesizeThresholdByte": bins.getThreshold(),
-	}
+	return bins.cfg
 }
 
 func (bins *FilesizeSearchCheck) SetConfig(cfg map[string]interface{}) error {
 	pat, ok := cfg["branchPattern"]
-	branchPattern := regexp.MustCompile(".*")
+	branchPattern := ".*"
 	if ok {
 		switch strPat := pat.(type) {
 		case string:
-			pat, err := utils.ExtractPattern(strPat)
-			if err != nil {
+			if _, err := utils.ExtractPattern(strPat); err != nil {
 				return err
 			}
-			branchPattern = pat
+			branchPattern = strPat
 		default:
 			return errors.New("given configuration didn't have a string as 'branchPattern'")
 		}
@@ -80,8 +76,8 @@ func (bins *FilesizeSearchCheck) SetConfig(cfg map[string]interface{}) error {
 }
 
 func (bins *FilesizeSearchCheck) getPat() *regexp.Regexp {
-	pat, _ := bins.cfg["branchPattern"].(*regexp.Regexp)
-	return pat
+	pat, _ := bins.cfg["branchPattern"].(string)
+	return regexp.MustCompile(pat)
 }
 
 func (bins *FilesizeSearchCheck) getThreshold() int64 {

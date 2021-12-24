@@ -23,39 +23,33 @@ func (*CommitMetaInfoCheck) String() string {
 }
 
 func (bins *CommitMetaInfoCheck) GetConfig() map[string]interface{} {
-	return map[string]interface{}{
-		"emailPattern":            bins.getPat("emailPattern").String(),
-		"namePattern":             bins.getPat("namePattern").String(),
-		"commitSizeThresholdByte": bins.getSizeThreshold(),
-	}
+	return bins.cfg
 }
 
 func (bins *CommitMetaInfoCheck) SetConfig(cfg map[string]interface{}) error {
 	pat, ok := cfg["emailPattern"]
-	emailPattern := regexp.MustCompile(".*")
+	emailPattern := ".*"
 	if ok {
 		switch strPat := pat.(type) {
 		case string:
-			p, err := utils.ExtractPattern(strPat)
-			if err != nil {
+			if _, err := utils.ExtractPattern(strPat); err != nil {
 				return err
 			}
-			emailPattern = p
+			emailPattern = strPat
 		default:
 			return errors.New("given configuration for  didn't have a string as 'emailPattern'")
 		}
 	}
 
 	pat, ok = cfg["namePattern"]
-	namePattern := regexp.MustCompile(".*")
+	namePattern := ".*"
 	if ok {
 		switch strPat := pat.(type) {
 		case string:
-			p, err := utils.ExtractPattern(strPat)
-			if err != nil {
+			if _, err := utils.ExtractPattern(strPat); err != nil {
 				return err
 			}
-			namePattern = p
+			namePattern = strPat
 		default:
 			return errors.New("given configuration for didn't have a string as 'namePattern'")
 		}
@@ -98,8 +92,8 @@ func (bins *CommitMetaInfoCheck) SetConfig(cfg map[string]interface{}) error {
 }
 
 func (bins *CommitMetaInfoCheck) getPat(name string) *regexp.Regexp {
-	pat, _ := bins.cfg[name].(*regexp.Regexp)
-	return pat
+	pat, _ := bins.cfg[name].(string)
+	return regexp.MustCompile(pat)
 }
 
 func (bins *CommitMetaInfoCheck) getSizeThreshold() int64 {

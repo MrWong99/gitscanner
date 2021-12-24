@@ -39,22 +39,19 @@ func (*UnicodeCharacterSearch) String() string {
 }
 
 func (bins *UnicodeCharacterSearch) GetConfig() map[string]interface{} {
-	return map[string]interface{}{
-		"branchPattern": bins.getPat().String(),
-	}
+	return bins.cfg
 }
 
 func (bins *UnicodeCharacterSearch) SetConfig(cfg map[string]interface{}) error {
 	pat, ok := cfg["branchPattern"]
-	branchPattern := regexp.MustCompile(".*")
+	branchPattern := ".*"
 	if ok {
 		switch strPat := pat.(type) {
 		case string:
-			pat, err := utils.ExtractPattern(strPat)
-			if err != nil {
+			if _, err := utils.ExtractPattern(strPat); err != nil {
 				return err
 			}
-			branchPattern = pat
+			branchPattern = strPat
 		default:
 			return errors.New("given configuration didn't have a string as 'branchPattern'")
 		}
@@ -66,8 +63,8 @@ func (bins *UnicodeCharacterSearch) SetConfig(cfg map[string]interface{}) error 
 }
 
 func (check *UnicodeCharacterSearch) getPat() *regexp.Regexp {
-	pat, _ := check.cfg["branchPattern"].(*regexp.Regexp)
-	return pat
+	pat, _ := check.cfg["branchPattern"].(string)
+	return regexp.MustCompile(pat)
 }
 
 func (check *UnicodeCharacterSearch) Check(wrapRepo *mygit.ClonedRepo, output chan<- utils.SingleCheck) error {

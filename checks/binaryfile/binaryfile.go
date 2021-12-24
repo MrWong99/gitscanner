@@ -22,22 +22,19 @@ func (*BinarySearchCheck) String() string {
 }
 
 func (bins *BinarySearchCheck) GetConfig() map[string]interface{} {
-	return map[string]interface{}{
-		"branchPattern": bins.getPat().String(),
-	}
+	return bins.cfg
 }
 
 func (bins *BinarySearchCheck) SetConfig(cfg map[string]interface{}) error {
 	pat, ok := cfg["branchPattern"]
-	branchPattern := regexp.MustCompile(".*")
+	branchPattern := ".*"
 	if ok {
 		switch strPat := pat.(type) {
 		case string:
-			pat, err := utils.ExtractPattern(strPat)
-			if err != nil {
+			if _, err := utils.ExtractPattern(strPat); err != nil {
 				return err
 			}
-			branchPattern = pat
+			branchPattern = strPat
 		default:
 			return errors.New("given configuration didn't have a string as 'branchPattern'")
 		}
@@ -49,8 +46,8 @@ func (bins *BinarySearchCheck) SetConfig(cfg map[string]interface{}) error {
 }
 
 func (check *BinarySearchCheck) getPat() *regexp.Regexp {
-	pat, _ := check.cfg["branchPattern"].(*regexp.Regexp)
-	return pat
+	pat, _ := check.cfg["branchPattern"].(string)
+	return regexp.MustCompile(pat)
 }
 
 func (check *BinarySearchCheck) Check(wrapRepo *mygit.ClonedRepo, output chan<- utils.SingleCheck) error {

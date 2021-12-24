@@ -7,6 +7,7 @@ import (
 	"runtime"
 	"time"
 
+	"github.com/MrWong99/gitscanner/config/encryption"
 	"github.com/go-git/go-git/v5"
 	"gorm.io/datatypes"
 	"gorm.io/gorm"
@@ -76,7 +77,11 @@ func ExtractPattern(input string) (*regexp.Regexp, error) {
 	if input == "" {
 		return regexp.MustCompile(".*"), nil
 	}
-	pat, err := regexp.Compile(input)
+	decodedInput, err := encryption.DecryptConfigString(input)
+	if err != nil {
+		return nil, err
+	}
+	pat, err := regexp.Compile(decodedInput)
 	if err != nil {
 		return nil, err
 	}

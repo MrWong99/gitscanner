@@ -3,6 +3,7 @@ package main
 import (
 	"embed"
 	"flag"
+	"fmt"
 	"io/fs"
 	"io/ioutil"
 	"log"
@@ -10,6 +11,7 @@ import (
 	"os"
 	"path"
 	"strconv"
+	"syscall"
 
 	"github.com/MrWong99/gitscanner/checks"
 	"github.com/MrWong99/gitscanner/checks/binaryfile"
@@ -17,9 +19,11 @@ import (
 	"github.com/MrWong99/gitscanner/checks/filesize"
 	"github.com/MrWong99/gitscanner/checks/unicode"
 	"github.com/MrWong99/gitscanner/config"
+	"github.com/MrWong99/gitscanner/config/encryption"
 	mygit "github.com/MrWong99/gitscanner/git"
 	"github.com/MrWong99/gitscanner/rest"
 	"github.com/gorilla/mux"
+	"golang.org/x/crypto/ssh/terminal"
 )
 
 //go:embed ui/dist/search-binary/*
@@ -30,7 +34,43 @@ var embedVersion string
 
 func main() {
 	configFile := flag.String("config", "GrootConfig.yml", "The absolute or relative path of the application configuration file.")
+	encryptionKey := flag.String("encryptionKey", "",
+		"Key to use for en-/decrypting sensitive data. Can also be provided via environment variable 'ENCRYPTION_KEY' or by typing into console after start.")
+	encrypt := flag.String("encrypt", "",
+		"When set this tool will simply encrypt the given input and exit afterwards. Can be used to encrypt any value for the config file.")
+	decrypt := flag.String("decrypt", "",
+		"When set this tool will simply decrypt the given input and exit afterwards. Can be used to decrypt any value for the config file given the correct key.")
 	flag.Parse()
+
+	if *encryptionKey == "" {
+		key, found := os.LookupEnv("ENCRYPTION_KEY")
+		if found {
+			encryptionKey = &key
+		} else {
+			encryptionKey = readKeyFromUserInput()
+		}
+	}
+	encryption.SetEncryptionKey(*encryptionKey)
+
+	if *encrypt != "" {
+		res, err := encryption.EncryptConfigString(*encrypt)
+		if err != nil {
+			log.Printf("Error during encryption: %v\n", err)
+			os.Exit(1)
+		}
+		fmt.Printf("Encrypted input is:\n%s\n", res)
+		os.Exit(0)
+	}
+
+	if *decrypt != "" {
+		res, err := encryption.DecryptConfigString(*decrypt)
+		if err != nil {
+			log.Printf("Error during decryption: %v\n", err)
+			os.Exit(1)
+		}
+		fmt.Printf("Decrypted input is:\n%s\n", res)
+		os.Exit(0)
+	}
 
 	fileContent, err := ioutil.ReadFile(*configFile)
 	if err != nil {
@@ -67,19 +107,39 @@ func main() {
 
 	if cfg.Auth != nil {
 		if cfg.Auth.BasicAuth != nil {
-			mygit.InitHttpBasicAuth(cfg.Auth.BasicAuth.Username, cfg.Auth.BasicAuth.Password)
+			name, err := encryption.DecryptConfigString(cfg.Auth.BasicAuth.Username)
+			if err != nil {
+				log.Printf("Could not decrypt auth.basicAuth.username, Error: %v\n", err)
+				os.Exit(1)
+			}
+			password, err := encryption.DecryptConfigString(cfg.Auth.BasicAuth.Password)
+			if err != nil {
+				log.Printf("Could not decrypt auth.basicAuth.password, Error: %v\n", err)
+				os.Exit(1)
+			}
+			mygit.InitHttpBasicAuth(name, password)
 		}
 		if cfg.Auth.Ssh != nil {
-			_, err := os.Stat(cfg.Auth.Ssh.PrivateKeyFile)
+			sshFile, err := encryption.DecryptConfigString(cfg.Auth.Ssh.PrivateKeyFile)
 			if err != nil {
-				log.Printf("Private key file %s could not be opened: %v\n", cfg.Auth.Ssh.PrivateKeyFile, err)
+				log.Printf("Could not decrypt auth.ssh.privateKeyFile, Error: %v\n", err)
+				os.Exit(1)
+			}
+			passphrase, err := encryption.DecryptConfigString(cfg.Auth.Ssh.KeyPassphrase)
+			if err != nil {
+				log.Printf("Could not decrypt auth.ssh.keyPassphrase, Error: %v\n", err)
+				os.Exit(1)
+			}
+			_, err = os.Stat(sshFile)
+			if err != nil {
+				log.Printf("Private key file %s could not be opened: %v\n", sshFile, err)
 			} else {
-				content, err := ioutil.ReadFile(cfg.Auth.Ssh.PrivateKeyFile)
+				content, err := ioutil.ReadFile(sshFile)
 				if err != nil {
-					log.Printf("Private key file %s could not be opened: %v\n", cfg.Auth.Ssh.PrivateKeyFile, err)
+					log.Printf("Private key file %s could not be opened: %v\n", sshFile, err)
 				} else {
-					if err = mygit.InitSshKey(content, cfg.Auth.Ssh.KeyPassphrase); err != nil {
-						log.Printf("Private key file %s could not be opened: %v\n", cfg.Auth.Ssh.PrivateKeyFile, err)
+					if err = mygit.InitSshKey(content, passphrase); err != nil {
+						log.Printf("Private key file %s could not be opened: %v\n", sshFile, err)
 					}
 				}
 			}
@@ -94,8 +154,18 @@ func main() {
 	}
 	router.PathPrefix("/").Handler(http.FileServer(http.FS(files)))
 	if cfg.Server.Tls != nil {
+		privateKeyFile, err := encryption.DecryptConfigString(cfg.Server.Tls.PrivateKeyFile)
+		if err != nil {
+			log.Printf("Could not decrypt server.tls.privateKeyFile, Error: %v\n", err)
+			os.Exit(1)
+		}
+		certFile, err := encryption.DecryptConfigString(cfg.Server.Tls.CertFile)
+		if err != nil {
+			log.Printf("Could not decrypt server.tls.certFile, Error: %v\n", err)
+			os.Exit(1)
+		}
 		log.Printf("Starting gitscanner %s\nNavigate to https://localhost:%d in your browser!\n", embedVersion, cfg.Server.Port)
-		err = http.ListenAndServeTLS(":"+strconv.Itoa(cfg.Server.Port), cfg.Server.Tls.CertFile, cfg.Server.Tls.PrivateKeyFile, router)
+		err = http.ListenAndServeTLS(":"+strconv.Itoa(cfg.Server.Port), privateKeyFile, certFile, router)
 	} else {
 		log.Printf("Starting gitscanner %s\nNavigate to http://localhost:%d in your browser!\n", embedVersion, cfg.Server.Port)
 		err = http.ListenAndServe(":"+strconv.Itoa(cfg.Server.Port), router)
@@ -126,4 +196,15 @@ func initializeChecks(configuredChecks []config.CheckConfig, availableChecks []c
 			log.Printf("Error while configuring check '%s'. Error: %v", check.String(), err)
 		}
 	}
+}
+
+func readKeyFromUserInput() *string {
+	fmt.Println("No encryption key provided to store configuration securly. Type it in now:")
+	password, err := terminal.ReadPassword(int(syscall.Stdin))
+	if err != nil {
+		log.Printf("Error while reading password: %v\n", err)
+		os.Exit(1)
+	}
+	pw := string(password)
+	return &pw
 }
