@@ -5,7 +5,7 @@ It relies heavily on [go-git](https://github.com/go-git/go-git).
 
 ## Usage
 
-To simply start the scanner run this command and provide a configuration file:
+To simply start the scanner run this command and provide a configuration file in YAML or JSON format:
 
 `./gitscanner -config <path to config file>`
 

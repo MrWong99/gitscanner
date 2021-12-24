@@ -14,10 +14,10 @@ server:
 auth:
   ssh:
     privateKeyFile: /home/myuser/.ssh/id_rsa  # SSH private key file to use when cloning repositories.
-    keyPassphrase: secr3t                     # Optional passphrase to decrypt the private key with.
+    keyPassphrase: ENC(3KnIfDCXFtsSqNdD0Q...) # Optional passphrase to decrypt the private key with.
   basicAuth:
     username: Mnaaz                           # Username for HTTP basic authentication.
-    password: v3ryS3cur4                      # Password for HTTP basic authentication.
+    password: ENC(3KnIfDCXFtsSqNdD0Q...)      # Password for HTTP basic authentication.
 
 # Configuration for every configurable check.
 checks:
