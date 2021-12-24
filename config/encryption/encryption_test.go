@@ -18,7 +18,6 @@ func TestEncodeDecode(t *testing.T) {
 	}
 
 	encString, err := EncryptConfigString(input)
-	t.Log(encString)
 	if err != nil {
 		t.Log("There should be no error when encrypting as string but got:")
 		t.Log(err)
@@ -29,7 +28,6 @@ func TestEncodeDecode(t *testing.T) {
 		t.Fail()
 	}
 	encByte, err := Encrypt([]byte(input))
-	t.Log(string(encByte))
 	if err != nil {
 		t.Log("There should be no error when encrypting but got:")
 		t.Log(err)
