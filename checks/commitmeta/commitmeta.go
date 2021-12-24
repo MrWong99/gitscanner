@@ -1,14 +1,13 @@
 package commitmeta
 
 import (
-	"errors"
 	"encoding/json"
+	"errors"
 	"math"
 	"regexp"
 	"strconv"
 	"strings"
 
-	"github.com/MrWong99/gitscanner/checks"
 	mygit "github.com/MrWong99/gitscanner/git"
 	"github.com/MrWong99/gitscanner/utils"
 	"github.com/go-git/go-git/v5/plumbing/object"
@@ -16,95 +15,96 @@ import (
 )
 
 type CommitMetaInfoCheck struct {
-	cfg checks.CheckConfiguration
+	cfg map[string]interface{}
 }
 
 func (*CommitMetaInfoCheck) String() string {
 	return "CheckCommitMetaInformation"
 }
 
-func (bins *CommitMetaInfoCheck) GetConfig() *checks.CheckConfiguration {
-	return &bins.cfg
+func (bins *CommitMetaInfoCheck) GetConfig() map[string]interface{} {
+	return map[string]interface{}{
+		"emailPattern":            bins.getPat("emailPattern").String(),
+		"namePattern":             bins.getPat("namePattern").String(),
+		"commitSizeThresholdByte": bins.getSizeThreshold(),
+	}
 }
 
-func (bins *CommitMetaInfoCheck) SetConfig(c *checks.CheckConfiguration) error {
-	cfg, err := c.ParseConfigMap()
-	if err != nil {
-		return err
-	}
+func (bins *CommitMetaInfoCheck) SetConfig(cfg map[string]interface{}) error {
 	pat, ok := cfg["emailPattern"]
-	if !ok {
-		return errors.New("Given configuration for '" + bins.String() + "' did not contain mandatory config 'emailPattern'!")
-	}
-	switch strPat := pat.(type) {
-	case string:
-		if _, err := utils.ExtractPattern(strPat); err != nil {
-			return err
+	emailPattern := regexp.MustCompile(".*")
+	if ok {
+		switch strPat := pat.(type) {
+		case string:
+			p, err := utils.ExtractPattern(strPat)
+			if err != nil {
+				return err
+			}
+			emailPattern = p
+		default:
+			return errors.New("given configuration for  didn't have a string as 'emailPattern'")
 		}
-	default:
-		return errors.New("Given configuration for '" + bins.String() + "' didn't have a string as 'emailPattern'!")
 	}
+
 	pat, ok = cfg["namePattern"]
-	if !ok {
-		return errors.New("Given configuration for '" + bins.String() + "' did not contain mandatory config 'namePattern'!")
-	}
-	switch strPat := pat.(type) {
-	case string:
-		if _, err := utils.ExtractPattern(strPat); err != nil {
-			return err
+	namePattern := regexp.MustCompile(".*")
+	if ok {
+		switch strPat := pat.(type) {
+		case string:
+			p, err := utils.ExtractPattern(strPat)
+			if err != nil {
+				return err
+			}
+			namePattern = p
+		default:
+			return errors.New("given configuration for didn't have a string as 'namePattern'")
 		}
-		bins.cfg = *c
-	default:
-		return errors.New("Given configuration for '" + bins.String() + "' didn't have a string as 'namePattern'!")
 	}
-	threshold, ok := cfg["commitSizeThresholdByte"]
+
+	t, ok := cfg["commitSizeThresholdByte"]
 	if !ok {
+		bins.cfg = map[string]interface{}{
+			"emailPattern":            emailPattern,
+			"namePattern":             namePattern,
+			"commitSizeThresholdByte": math.MaxInt64,
+		}
 		return nil
 	}
-	switch threshold.(type) {
-	case int, int8, int16, int32, int64, float32, float64:
+	var t64 int64
+	switch threshold := t.(type) {
+	case int:
+		t64 = int64(threshold)
+	case int8:
+		t64 = int64(threshold)
+	case int16:
+		t64 = int64(threshold)
+	case int32:
+		t64 = int64(threshold)
+	case int64:
+		t64 = int64(threshold)
+	case float32:
+		t64 = int64(math.Trunc(float64(threshold)))
+	case float64:
+		t64 = int64(math.Trunc(threshold))
 	default:
-		return errors.New("Given configuration for '" + bins.String() + "' didn't have a int for optional 'commitSizeThresholdByte'!")
+		return errors.New("given configuration didn't have an integer for optional 'commitSizeThresholdByte'")
+	}
+	bins.cfg = map[string]interface{}{
+		"emailPattern":            emailPattern,
+		"namePattern":             namePattern,
+		"commitSizeThresholdByte": t64,
 	}
 	return nil
 }
 
 func (bins *CommitMetaInfoCheck) getPat(name string) *regexp.Regexp {
-	pat, ok := bins.cfg.MustParseConfigMap()[name]
-	if !ok {
-		return regexp.MustCompile(".*")
-	}
-	switch strPat := pat.(type) {
-	case string:
-		return regexp.MustCompile(strPat)
-	default:
-		return regexp.MustCompile(".*")
-	}
+	pat, _ := bins.cfg[name].(*regexp.Regexp)
+	return pat
 }
 
 func (bins *CommitMetaInfoCheck) getSizeThreshold() int64 {
-	t, ok := bins.cfg.MustParseConfigMap()["commitSizeThresholdByte"]
-	if !ok {
-		return math.MaxInt64
-	}
-	switch threshold := t.(type) {
-	case int:
-		return int64(threshold)
-	case int8:
-		return int64(threshold)
-	case int16:
-		return int64(threshold)
-	case int32:
-		return int64(threshold)
-	case int64:
-		return int64(threshold)
-	case float32:
-		return int64(math.Trunc(float64(threshold)))
-	case float64:
-		return int64(math.Trunc(threshold))
-	default:
-		return math.MaxInt64
-	}
+	i, _ := bins.cfg["commitSizeThresholdByte"].(int64)
+	return i
 }
 
 func (check *CommitMetaInfoCheck) Check(wrapRepo *mygit.ClonedRepo, output chan<- utils.SingleCheck) error {
@@ -140,12 +140,12 @@ func (check *CommitMetaInfoCheck) Check(wrapRepo *mygit.ClonedRepo, output chan<
 
 func getAdditionalInfo(c *object.Commit, commitSize int64) datatypes.JSON {
 	bytes, err := json.Marshal(map[string]interface{}{
-		"commitMessage": c.Message,
-		"authorName": c.Author.Name,
-		"authorEmail": c.Author.Email,
-		"commiterName": c.Committer.Name,
-		"commiterEmail": c.Committer.Email,
-		"commitSize": utils.ByteCountDecimal(commitSize),
+		"commitMessage":   c.Message,
+		"authorName":      c.Author.Name,
+		"authorEmail":     c.Author.Email,
+		"commiterName":    c.Committer.Name,
+		"commiterEmail":   c.Committer.Email,
+		"commitSize":      utils.ByteCountDecimal(commitSize),
 		"numberOfParents": strconv.Itoa(c.NumParents()),
 	})
 	if err != nil {

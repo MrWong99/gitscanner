@@ -1,0 +1,17 @@
+server:
+    port: 16092
+checks:
+    - name: CheckCommitMetaInformation
+      enabled: true
+      config:
+        commitSizeThresholdByte: 86457
+        emailPattern: .*
+        namePattern: .*
+    - name: SearchBinaries
+      enabled: false
+      config:
+        branchPattern: .*
+    - name: SearchIllegalUnicodeCharacters
+      enabled: true
+      config:
+        branchPattern: .*origin/develop

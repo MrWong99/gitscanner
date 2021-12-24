@@ -10,8 +10,8 @@ import (
 	"time"
 
 	"github.com/MrWong99/gitscanner/checks"
+	"github.com/MrWong99/gitscanner/config"
 	"github.com/MrWong99/gitscanner/db/checkrepo"
-	"github.com/MrWong99/gitscanner/db/configrepo"
 	mygit "github.com/MrWong99/gitscanner/git"
 	"github.com/MrWong99/gitscanner/utils"
 	"github.com/gorilla/mux"
@@ -50,31 +50,22 @@ type Acknowledge struct {
 func handleCheckRequest(w http.ResponseWriter, r *http.Request) {
 	w.Header().Add("Content-Type", "application/json")
 	body, err := ioutil.ReadAll(r.Body)
-	if err != nil {
-		log.Println(err)
-		w.WriteHeader(400)
-		w.Write([]byte(err.Error()))
+	if handleError(err, 400, w, r) {
 		return
 	}
 	var request utils.SearchRequestBody
 	err = json.Unmarshal(body, &request)
-	if err != nil {
-		log.Println(err)
-		w.WriteHeader(400)
-		w.Write([]byte(err.Error()))
+	if handleError(err, 400, w, r) {
 		return
 	}
 	checks := checks.CheckAllRepositoriesSpecificChecks(strings.Split(request.Path, ","), request.CheckNames)
 	err = checkrepo.SaveChecks(checks)
-	if err != nil {
-		log.Println(err)
-		w.WriteHeader(400)
-		w.Write([]byte(err.Error()))
+	if handleError(err, 400, w, r) {
 		return
 	}
 	err = json.NewEncoder(w).Encode(checks)
 	if err != nil {
-		log.Printf("Error encoding response: %v", err)
+		log.Printf("Error encoding response: %v\n", err)
 	}
 }
 
@@ -84,10 +75,7 @@ func handleGetConfig(w http.ResponseWriter, r *http.Request) {
 	checkName := vars["checkName"]
 	w.Header().Add("Content-Type", "application/json")
 	cfg, err := checks.GetCurrentConfig(checkName)
-	if err != nil {
-		log.Println(err)
-		w.WriteHeader(400)
-		w.Write([]byte(err.Error()))
+	if handleError(err, 400, w, r) {
 		return
 	}
 	json.NewEncoder(w).Encode(cfg)
@@ -97,85 +85,68 @@ func handleGetConfig(w http.ResponseWriter, r *http.Request) {
 func handlePutConfig(w http.ResponseWriter, r *http.Request) {
 	w.Header().Add("Content-Type", "application/json")
 	body, err := ioutil.ReadAll(r.Body)
-	if err != nil {
-		log.Println(err)
-		w.WriteHeader(400)
+	if handleError(err, 400, w, r) {
 		return
 	}
-	var request checks.CheckConfiguration
+	var request config.CheckConfig
 	err = json.Unmarshal(body, &request)
-	if err != nil {
-		log.Println(err)
-		w.WriteHeader(400)
+	if handleError(err, 400, w, r) {
 		return
 	}
 	err = checks.Configure(&request)
-	if err != nil {
-		log.Println(err)
-		w.WriteHeader(400)
-		w.Write([]byte(err.Error()))
+	if handleError(err, 400, w, r) {
 		return
-	} else {
-		configrepo.UpdateConfig(&request)
-		w.WriteHeader(200)
 	}
+	cfg := config.CurrentConfig()
+	checkCfg, _ := checks.GetCurrentConfig(request.Name)
+	checkCfg.Enabled = request.Enabled
+	cfg.AddOrUpdateCheckConfig(checkCfg)
+	err = config.UpdateConfigFile()
+	if handleError(err, 400, w, r) {
+		return
+	}
+	w.WriteHeader(200)
 }
 
 // PUT /api/v1/config/sshkey
 func handlePutSshKey(w http.ResponseWriter, r *http.Request) {
 	w.Header().Add("Content-Type", "application/json")
 	body, err := ioutil.ReadAll(r.Body)
-	if err != nil {
-		log.Println(err)
-		w.WriteHeader(400)
+	if handleError(err, 400, w, r) {
 		return
 	}
 	var request SshPrivateKeyInfo
 	err = json.Unmarshal(body, &request)
-	if err != nil {
-		log.Println(err)
-		w.WriteHeader(400)
+	if handleError(err, 400, w, r) {
 		return
 	}
 	err = updateSshKey(&request)
-	if err != nil {
-		log.Println(err)
-		w.WriteHeader(400)
-		w.Write([]byte(err.Error()))
+	if handleError(err, 400, w, r) {
 		return
-	} else {
-		w.WriteHeader(200)
 	}
+	w.WriteHeader(200)
 }
 
 // PUT /api/v1/config/basicauth
 func handlePutBasicAuth(w http.ResponseWriter, r *http.Request) {
 	w.Header().Add("Content-Type", "application/json")
 	body, err := ioutil.ReadAll(r.Body)
-	if err != nil {
-		log.Println(err)
-		w.WriteHeader(400)
+	if handleError(err, 400, w, r) {
 		return
 	}
 	var request BasicAuth
 	err = json.Unmarshal(body, &request)
-	if err != nil {
-		log.Println(err)
-		w.WriteHeader(400)
+	if handleError(err, 400, w, r) {
 		return
 	}
 	err = updateBasicAuth(&request)
-	if err != nil {
-		log.Println(err)
-		w.WriteHeader(400)
-		w.Write([]byte(err.Error()))
+	if handleError(err, 400, w, r) {
 		return
-	} else {
-		w.WriteHeader(200)
 	}
+	w.WriteHeader(200)
 }
 
-// GET /api/v1/checks
+// GET /api/v1/checkDefinitions
 func handleGetChecks(w http.ResponseWriter, r *http.Request) {
 	w.Header().Add("Content-Type", "application/json")
 	var checkNames []string
@@ -191,29 +162,19 @@ func handleAcknowledge(w http.ResponseWriter, r *http.Request) {
 	vars := mux.Vars(r)
 	var requestAck Acknowledge
 	body, err := ioutil.ReadAll(r.Body)
-	if err != nil {
-		log.Println(err)
-		w.WriteHeader(400)
-		w.Write([]byte(err.Error()))
+	if handleError(err, 400, w, r) {
+		return
 	}
 	err = json.Unmarshal(body, &requestAck)
-	if err != nil {
-		log.Println(err)
-		w.WriteHeader(400)
-		w.Write([]byte(err.Error()))
+	if handleError(err, 400, w, r) {
 		return
 	}
 	id, err := strconv.ParseUint(vars["singleCheckId"], 10, 64)
-	if err != nil {
-		log.Println(err)
-		w.WriteHeader(400)
-		w.Write([]byte(err.Error()))
+	if handleError(err, 400, w, r) {
 		return
 	}
-	if err = checkrepo.AcknowledgeCheck(uint(id), requestAck.Acknowledged); err != nil {
-		log.Println(err)
-		w.WriteHeader(400)
-		w.Write([]byte(err.Error()))
+	err = checkrepo.AcknowledgeCheck(uint(id), requestAck.Acknowledged)
+	if handleError(err, 400, w, r) {
 		return
 	}
 	w.WriteHeader(200)
@@ -226,13 +187,21 @@ func handleRetrieveChecksByDate(w http.ResponseWriter, r *http.Request) {
 	from, _ := strconv.ParseInt(vars["from"], 10, 64)
 	to, _ := strconv.ParseInt(vars["to"], 10, 64)
 	checks, err := checkrepo.ReadSavedChecks(strings.Split(vars["checkNames"], ","), time.UnixMilli(from), time.UnixMilli(to))
-	if err != nil {
-		log.Println(err)
-		w.WriteHeader(500)
-		w.Write([]byte(err.Error()))
+	if handleError(err, 500, w, r) {
 		return
 	}
 	json.NewEncoder(w).Encode(checks)
+}
+
+func handleError(err error, statusCode int, w http.ResponseWriter, r *http.Request) bool {
+	if err == nil {
+		return false
+	}
+	log.Printf("%s on %s failed with error: %v\n", r.Method, r.URL, err)
+	log.Println(err)
+	w.WriteHeader(statusCode)
+	w.Write([]byte(err.Error()))
+	return true
 }
 
 func updateSshKey(keyInfo *SshPrivateKeyInfo) error {
