@@ -11,6 +11,7 @@ import (
 
 	"github.com/MrWong99/gitscanner/checks"
 	"github.com/MrWong99/gitscanner/config"
+	"github.com/MrWong99/gitscanner/config/encryption"
 	"github.com/MrWong99/gitscanner/db/checkrepo"
 	mygit "github.com/MrWong99/gitscanner/git"
 	"github.com/MrWong99/gitscanner/utils"
@@ -205,9 +206,61 @@ func handleError(err error, statusCode int, w http.ResponseWriter, r *http.Reque
 }
 
 func updateSshKey(keyInfo *SshPrivateKeyInfo) error {
-	return mygit.InitSshKey([]byte(keyInfo.Key), keyInfo.Password)
+	err := mygit.InitSshKey([]byte(keyInfo.Key), keyInfo.Password)
+	if err != nil {
+		return err
+	}
+	keyFile, err := encryption.EncryptConfigString(keyInfo.Key)
+	if err != nil {
+		return err
+	}
+	password, err := encryption.EncryptConfigString(keyInfo.Password)
+	if err != nil {
+		return err
+	}
+	cfg := config.CurrentConfig()
+	if cfg.Auth == nil {
+		cfg.Auth = &config.AuthConfig{
+			Ssh: &config.SshConfig{
+				PrivateKeyFile: keyFile,
+				KeyPassphrase:  password,
+			},
+		}
+	} else {
+		cfg.Auth.Ssh = &config.SshConfig{
+			PrivateKeyFile: keyFile,
+			KeyPassphrase:  password,
+		}
+	}
+	return config.UpdateConfigFile()
 }
 
 func updateBasicAuth(auth *BasicAuth) error {
-	return mygit.InitHttpBasicAuth(auth.Username, auth.Password)
+	err := mygit.InitHttpBasicAuth(auth.Username, auth.Password)
+	if err != nil {
+		return err
+	}
+	username, err := encryption.EncryptConfigString(auth.Username)
+	if err != nil {
+		return err
+	}
+	password, err := encryption.EncryptConfigString(auth.Password)
+	if err != nil {
+		return err
+	}
+	cfg := config.CurrentConfig()
+	if cfg.Auth == nil {
+		cfg.Auth = &config.AuthConfig{
+			BasicAuth: &config.BasicAuthConfig{
+				Username: username,
+				Password: password,
+			},
+		}
+	} else {
+		cfg.Auth.BasicAuth = &config.BasicAuthConfig{
+			Username: username,
+			Password: password,
+		}
+	}
+	return config.UpdateConfigFile()
 }
