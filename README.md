@@ -226,7 +226,8 @@ When started in server mode *gitscanner* will provide the following endpoints:
 
 **Response Body:**
 
-* `checkName`: the name of the check.
+* `name`: the name of the check.
+* `enabled`: if set to false this check can't be executed.
 * `config`: a configuration object specific for each check. Here is a list of possible values:
   * `branchPattern`: pattern to match branches against. The *SearchBinaries* and *SearchIllegalUnicodeCharacters* checks use this.
   * `namePattern`: pattern to match the commiter and author names against. The *CheckCommitMetaInformation* check uses this.
@@ -238,7 +239,8 @@ When started in server mode *gitscanner* will provide the following endpoints:
 
 ```json
 {
-    "checkName": "SearchBigFiles",
+    "name": "SearchBigFiles",
+    "enabled": false,
     "config": {
         "branchPattern": ".*origin/master",
         "filesizeThresholdByte": 89234
@@ -255,7 +257,8 @@ When started in server mode *gitscanner* will provide the following endpoints:
 
 **Request Body:**
 
-* `checkName`: the name of the check.
+* `name`: the name of the check.
+* `enabled`: if set to false this check can't be executed.
 * `config`: a configuration object specific for each check. Here is a list of possible values:
   * `branchPattern`: pattern to match branches against. The *SearchBinaries* and *SearchIllegalUnicodeCharacters* checks use this.
   * `namePattern`: pattern to match the commiter and author names against. The *CheckCommitMetaInformation* check uses this.
@@ -267,7 +270,8 @@ When started in server mode *gitscanner* will provide the following endpoints:
 
 ```json
 {
-    "checkName": "CheckCommitMetaInformation",
+    "name": "CheckCommitMetaInformation",
+    "enabled": true,
     "config": {
         "namePattern": "MrWong99",
         "emailPattern": ".*@cool.com|.*@nice.eu"
