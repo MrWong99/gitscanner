@@ -2,27 +2,28 @@ package main
 
 import (
 	"embed"
-	"encoding/json"
 	"flag"
+	"fmt"
 	"io/fs"
 	"io/ioutil"
 	"log"
 	"net/http"
 	"os"
+	"path"
 	"strconv"
-	"strings"
+	"syscall"
 
 	"github.com/MrWong99/gitscanner/checks"
 	"github.com/MrWong99/gitscanner/checks/binaryfile"
 	"github.com/MrWong99/gitscanner/checks/commitmeta"
 	"github.com/MrWong99/gitscanner/checks/filesize"
 	"github.com/MrWong99/gitscanner/checks/unicode"
-	"github.com/MrWong99/gitscanner/db"
-	"github.com/MrWong99/gitscanner/db/configrepo"
+	"github.com/MrWong99/gitscanner/config"
+	"github.com/MrWong99/gitscanner/config/encryption"
 	mygit "github.com/MrWong99/gitscanner/git"
 	"github.com/MrWong99/gitscanner/rest"
-	"github.com/MrWong99/gitscanner/utils"
 	"github.com/gorilla/mux"
+	"golang.org/x/crypto/ssh/terminal"
 )
 
 //go:embed ui/dist/search-binary/*
@@ -32,161 +33,178 @@ var embedUi embed.FS
 var embedVersion string
 
 func main() {
-	log.SetOutput(os.Stderr)
-	repositoryPaths := flag.String("repositories", "",
-		"A comma-separated list of repositories to perform checks against. Can be in these formats:\n"+
-			"- http(s)://<remote URL>\n- git@<remote URL>\n- file://<path>")
-	username := flag.String("username", "", "An optional username for http basic auth.")
-	password := flag.String("password", "", "An optional password for http basic auth.")
-	privateKeyFile := flag.String("ssh-private-key-file", "", "An optional path to a SSH private key file in PEM format.")
-	keyPassword := flag.String("ssh-private-key-password", "", "An optional password if the given private key file is encrypted.")
-	branchPattern := flag.String("branch-pattern", ".*", "Optional pattern to match refs against. Only matches will be processed in checks that rely on refs.")
-	namePattern := flag.String("name-pattern", ".*", "Pattern to match all commiter and author names against. This will be used for the commitmeta.CheckCommits check.")
-	emailPattern := flag.String("email-pattern", ".*", "Pattern to match all commiter and author emails against. This will be used for the commitmeta.CheckCommits check.")
-	filesizeThreshold := flag.Int64("filesize-threshold-bytes", 81920, "Amout of bytes that a file should have maximum to trigger this check.")
-	port := flag.Int("port", -1, "When provided this will startup a webserver including ui that can be used to perform the checks via browser.")
-	sslKeyFile := flag.String("ssl-private-key-file", "", "An optional path to a TLS private key file in PEM format to enable HTTPS. Only used when port is set.")
-	sslCertFile := flag.String("ssl-certificate-chain-file", "", "An optional path to a TLS certificate (chain) in PEM format to enable HTTPS. Only used when port is set.")
+	configFile := flag.String("config", "GrootConfig.yml", "The absolute or relative path of the application configuration file.")
+	encryptionKey := flag.String("encryptionKey", "",
+		"Key to use for en-/decrypting sensitive data. Can also be provided via environment variable 'ENCRYPTION_KEY' or by typing into console after start.")
+	encrypt := flag.String("encrypt", "",
+		"When set this tool will simply encrypt the given input and exit afterwards. Can be used to encrypt any value for the config file.")
+	decrypt := flag.String("decrypt", "",
+		"When set this tool will simply decrypt the given input and exit afterwards. Can be used to decrypt any value for the config file given the correct key.")
 	flag.Parse()
 
-	checks.AddCheck(&binaryfile.BinarySearchCheck{})
-	checks.AddCheck(&commitmeta.CommitMetaInfoCheck{})
-	checks.AddCheck(&unicode.UnicodeCharacterSearch{})
-	checks.AddCheck(&filesize.FilesizeSearchCheck{})
+	if *encryptionKey == "" {
+		key, found := os.LookupEnv("ENCRYPTION_KEY")
+		if found {
+			encryptionKey = &key
+		} else {
+			encryptionKey = readKeyFromUserInput()
+		}
+	}
+	encryption.SetEncryptionKey(*encryptionKey)
 
-	saveConfigToDB(branchPattern, namePattern, emailPattern, filesizeThreshold)
+	if *encrypt != "" {
+		res, err := encryption.EncryptConfigString(*encrypt)
+		if err != nil {
+			log.Printf("Error during encryption: %v\n", err)
+			os.Exit(1)
+		}
+		fmt.Printf("Encrypted input is:\n%s\n", res)
+		os.Exit(0)
+	}
 
-	if *repositoryPaths == "" && *port < 1 {
-		log.Println("No repositories defined!")
+	if *decrypt != "" {
+		res, err := encryption.DecryptConfigString(*decrypt)
+		if err != nil {
+			log.Printf("Error during decryption: %v\n", err)
+			os.Exit(1)
+		}
+		fmt.Printf("Decrypted input is:\n%s\n", res)
+		os.Exit(0)
+	}
+
+	fileContent, err := ioutil.ReadFile(*configFile)
+	if err != nil {
+		log.Printf("Could not read file '%s'. Error: %v\n", *configFile, err)
+		os.Exit(1)
+	}
+	config.ConfigLocation = *configFile
+	var cfg *config.Config
+	switch path.Ext(*configFile) {
+	case ".yml", ".yaml":
+		cfg, err = config.ReadYaml(fileContent)
+	case ".json":
+		cfg, err = config.ReadJson(fileContent)
+	default:
+		log.Printf("Could not determine file type of '%s', just trying to decode it as yaml...\n", *configFile)
+		cfg, err = config.ReadYaml(fileContent)
+	}
+	if err != nil {
+		log.Printf("Could not decode file '%s'. Error: %v\n", *configFile, err)
 		os.Exit(1)
 	}
 
-	if *username != "" {
-		mygit.InitHttpBasicAuth(*username, *password)
+	initializeChecks(cfg.Checks, []checks.Checker{
+		&binaryfile.BinarySearchCheck{},
+		&commitmeta.CommitMetaInfoCheck{},
+		&unicode.UnicodeCharacterSearch{},
+		&filesize.FilesizeSearchCheck{},
+	})
+
+	if cfg.Server == nil || cfg.Server.Port < 1 {
+		log.Println("No port configured to start server.")
+		os.Exit(1)
 	}
-	if *privateKeyFile != "" {
-		_, err := os.Stat(*privateKeyFile)
-		if err != nil {
-			log.Printf("Private key file %s could not be opened: %v\n", *privateKeyFile, err)
-		} else {
-			content, err := ioutil.ReadFile(*privateKeyFile)
+
+	if cfg.Auth != nil {
+		if cfg.Auth.BasicAuth != nil {
+			name, err := encryption.DecryptConfigString(cfg.Auth.BasicAuth.Username)
 			if err != nil {
-				log.Printf("Private key file %s could not be opened: %v\n", *privateKeyFile, err)
+				log.Printf("Could not decrypt auth.basicAuth.username, Error: %v\n", err)
+				os.Exit(1)
+			}
+			password, err := encryption.DecryptConfigString(cfg.Auth.BasicAuth.Password)
+			if err != nil {
+				log.Printf("Could not decrypt auth.basicAuth.password, Error: %v\n", err)
+				os.Exit(1)
+			}
+			mygit.InitHttpBasicAuth(name, password)
+		}
+		if cfg.Auth.Ssh != nil {
+			sshFile, err := encryption.DecryptConfigString(cfg.Auth.Ssh.PrivateKeyFile)
+			if err != nil {
+				log.Printf("Could not decrypt auth.ssh.privateKeyFile, Error: %v\n", err)
+				os.Exit(1)
+			}
+			passphrase, err := encryption.DecryptConfigString(cfg.Auth.Ssh.KeyPassphrase)
+			if err != nil {
+				log.Printf("Could not decrypt auth.ssh.keyPassphrase, Error: %v\n", err)
+				os.Exit(1)
+			}
+			_, err = os.Stat(sshFile)
+			if err != nil {
+				log.Printf("Private key file %s could not be opened: %v\n", sshFile, err)
 			} else {
-				if err = mygit.InitSshKey(content, *keyPassword); err != nil {
-					log.Printf("Private key file %s could not be opened: %v\n", *privateKeyFile, err)
+				content, err := ioutil.ReadFile(sshFile)
+				if err != nil {
+					log.Printf("Private key file %s could not be opened: %v\n", sshFile, err)
+				} else {
+					if err = mygit.InitSshKey(content, passphrase); err != nil {
+						log.Printf("Private key file %s could not be opened: %v\n", sshFile, err)
+					}
 				}
 			}
 		}
 	}
 
-	if *port > 0 {
-		log.SetOutput(os.Stdout)
-		router := mux.NewRouter()
-		rest.InitRouter(router)
-		files, err := fs.Sub(embedUi, "ui/dist/search-binary")
+	router := mux.NewRouter()
+	rest.InitRouter(router)
+	files, err := fs.Sub(embedUi, "ui/dist/search-binary")
+	if err != nil {
+		panic(err)
+	}
+	router.PathPrefix("/").Handler(http.FileServer(http.FS(files)))
+	if cfg.Server.Tls != nil {
+		privateKeyFile, err := encryption.DecryptConfigString(cfg.Server.Tls.PrivateKeyFile)
 		if err != nil {
-			panic(err)
+			log.Printf("Could not decrypt server.tls.privateKeyFile, Error: %v\n", err)
+			os.Exit(1)
 		}
-		router.PathPrefix("/").Handler(http.FileServer(http.FS(files)))
-		if *sslKeyFile != "" && *sslCertFile != "" {
-			log.Printf("Starting gitscanner %s\nNavigate to https://localhost:%d in your browser!\n", embedVersion, *port)
-			err = http.ListenAndServeTLS(":"+strconv.Itoa(*port), *sslCertFile, *sslKeyFile, router)
-		} else {
-			log.Printf("Starting gitscanner %s\nNavigate to http://localhost:%d in your browser!\n", embedVersion, *port)
-			err = http.ListenAndServe(":"+strconv.Itoa(*port), router)
-		}
+		certFile, err := encryption.DecryptConfigString(cfg.Server.Tls.CertFile)
 		if err != nil {
-			log.Printf("%v\n", err)
+			log.Printf("Could not decrypt server.tls.certFile, Error: %v\n", err)
+			os.Exit(1)
 		}
+		log.Printf("Starting gitscanner %s\nNavigate to https://localhost:%d in your browser!\n", embedVersion, cfg.Server.Port)
+		err = http.ListenAndServeTLS(":"+strconv.Itoa(cfg.Server.Port), privateKeyFile, certFile, router)
 	} else {
-		allPaths := strings.Split(*repositoryPaths, ",")
-		res := checks.CheckAllRepositories(allPaths)
-		jsonStr, err := json.Marshal(res)
-		if err == nil {
-			log.Printf("%s\n\n", jsonStr)
-		} else {
-			log.Printf("JSON failed '%v'\n", err)
-			for _, v := range res {
-				log.Printf("%v\n\n", *v)
-			}
-		}
+		log.Printf("Starting gitscanner %s\nNavigate to http://localhost:%d in your browser!\n", embedVersion, cfg.Server.Port)
+		err = http.ListenAndServe(":"+strconv.Itoa(cfg.Server.Port), router)
+	}
+	if err != nil {
+		log.Printf("%v\n", err)
 	}
 }
 
-func saveConfigToDB(branchPattern, namePattern, emailPattern *string, filesizeThreshold *int64) {
-	var err error
-
-	err = db.InitDb()
-	if err != nil {
-		log.Printf("Error while initializing database: %v\n", err)
-		os.Exit(1)
+func initializeChecks(configuredChecks []config.CheckConfig, availableChecks []checks.Checker) {
+	configMap := map[string]map[string]interface{}{}
+	for _, cfgCheck := range configuredChecks {
+		configMap[cfgCheck.Name] = cfgCheck.Config
 	}
-
-	if _, err = utils.ExtractPattern(*branchPattern); err != nil {
-		log.Printf("Error with given pattern %s: %v\n", *branchPattern, err)
-		os.Exit(1)
-	}
-	if _, err = utils.ExtractPattern(*namePattern); err != nil {
-		log.Printf("Error with given pattern %s: %v\n", *namePattern, err)
-		os.Exit(1)
-	}
-	if _, err = utils.ExtractPattern(*emailPattern); err != nil {
-		log.Printf("Error with given pattern %s: %v\n", *emailPattern, err)
-		os.Exit(1)
-	}
-
-	for _, check := range checks.RepoChecks {
+	for _, check := range availableChecks {
+		checks.AddCheck(check)
 		configurableCheck, configurable := check.(checks.ConfigurableChecker)
 		if !configurable {
 			continue
 		}
-
-		var currentCfg *checks.CheckConfiguration
-
-		currentCfg, err = configrepo.ReadConfig(configurableCheck.String())
-		if err != nil {
-			log.Printf("Error while reading config '%s' from database: %v\n", check.String(), err)
-		}
-		if currentCfg != nil {
-			configurableCheck.SetConfig(currentCfg)
+		cfg, ok := configMap[check.String()]
+		if !ok {
+			configurableCheck.SetConfig(map[string]interface{}{})
 			continue
 		}
-		newCfg := &checks.CheckConfiguration{
-			CheckName: configurableCheck.String(),
-		}
-		var err error
-		switch configurableCheck.String() {
-		case "SearchBinaries":
-			err = newCfg.SetConfigMap(map[string]interface{}{
-				"branchPattern": *branchPattern,
-			})
-		case "CheckCommitMetaInformation":
-			err = newCfg.SetConfigMap(map[string]interface{}{
-				"emailPattern": *emailPattern,
-				"namePattern":  *namePattern,
-			})
-		case "SearchBigFiles":
-			err = newCfg.SetConfigMap(map[string]interface{}{
-				"branchPattern":         *branchPattern,
-				"filesizeThresholdByte": *filesizeThreshold,
-			})
-		case "SearchIllegalUnicodeCharacters":
-			err = newCfg.SetConfigMap(map[string]interface{}{
-				"branchPattern": *branchPattern,
-			})
-		default:
-			log.Printf("Error while updating config for check '%s': Name not registered in saveConfigToDB.\n", configurableCheck.String())
-		}
+		err := configurableCheck.SetConfig(cfg)
 		if err != nil {
-			log.Printf("Error while updating config for check '%s': %v\n", configurableCheck.String(), err)
-			continue
-		}
-		configurableCheck.SetConfig(newCfg)
-		err = configrepo.UpdateConfig(newCfg)
-		if err != nil {
-			log.Printf("Error while updating config in database: %v\n", err)
-			os.Exit(1)
+			log.Printf("Error while configuring check '%s'. Error: %v", check.String(), err)
 		}
 	}
+}
+
+func readKeyFromUserInput() *string {
+	fmt.Println("No encryption key provided to store configuration securly. Type it in now:")
+	password, err := terminal.ReadPassword(int(syscall.Stdin))
+	if err != nil {
+		log.Printf("Error while reading password: %v\n", err)
+		os.Exit(1)
+	}
+	pw := string(password)
+	return &pw
 }

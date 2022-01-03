@@ -49,6 +49,7 @@ func (repo *ClonedRepo) Cleanup() error {
 // Clone a given repository and return it. The url can be given in these formats:
 // file://<path> -> path to repository in local filesystem
 // git@<remote repo> -> ssh repository clone URL
+// ssh://<url> -> ssh repository clone URL
 // http(s)://<remote repo>
 func CloneRepo(url string) (*ClonedRepo, error) {
 	clonedPath, err := os.MkdirTemp("", "git")
@@ -64,7 +65,7 @@ func CloneRepo(url string) (*ClonedRepo, error) {
 			Auth:     httpAuth,
 			Progress: os.Stderr,
 		})
-	} else if strings.HasPrefix(url, "git@") {
+	} else if strings.HasPrefix(url, "git@") || strings.HasPrefix(url, "ssh://") {
 		auth = sshKeyAuth
 		repo, err = git.PlainClone(clonedPath, false, &git.CloneOptions{
 			URL:      url,

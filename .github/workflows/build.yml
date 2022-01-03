@@ -1,10 +1,14 @@
 name: build
 
-on: [push, pull_request]
+on:
+  push:
+    branches: [ master ]
+  pull_request:
+    branches: [ master ]
 
 jobs:
   build:
-    name: Build
+    name: Build and test
     runs-on: ubuntu-latest
     steps:
     - uses: actions/checkout@v2
@@ -28,6 +32,9 @@ jobs:
         cd ui
         npm install
         npm run build
+    
+    - name: Test Go
+      run: go test -v ./...
 
     - name: Build Linux
       run: CGO_ENABLED=1 GOOS=linux GOARCH=amd64 go build -o gitscanner -v .

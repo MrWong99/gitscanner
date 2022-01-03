@@ -1,53 +1,16 @@
 package checks
 
 import (
-	"encoding/json"
 	"errors"
 	"fmt"
 	"log"
 	"sync"
 	"time"
 
+	"github.com/MrWong99/gitscanner/config"
 	mygit "github.com/MrWong99/gitscanner/git"
 	"github.com/MrWong99/gitscanner/utils"
-	"gorm.io/datatypes"
-	"gorm.io/gorm"
 )
-
-type CheckConfiguration struct {
-	CheckName string         `json:"checkName" gorm:"primaryKey"`
-	Config    datatypes.JSON `json:"config"`
-	CreatedAt time.Time      `json:"-"`
-	UpdatedAt time.Time      `json:"-"`
-	DeletedAt gorm.DeletedAt `json:"-" gorm:"index"`
-}
-
-func (config *CheckConfiguration) SetConfigMap(cMap map[string]interface{}) error {
-	cfg, err := json.Marshal(&cMap)
-	if err != nil {
-		return err
-	}
-	config.Config = cfg
-	return nil
-}
-
-func (config *CheckConfiguration) ParseConfigMap() (map[string]interface{}, error) {
-	var result map[string]interface{}
-	err := json.Unmarshal(config.Config, &result)
-	if err != nil {
-		return nil, err
-	}
-	return result, nil
-}
-
-func (config *CheckConfiguration) MustParseConfigMap() map[string]interface{} {
-	var result map[string]interface{}
-	err := json.Unmarshal(config.Config, &result)
-	if err != nil {
-		panic(err)
-	}
-	return result
-}
 
 type Checker interface {
 	fmt.Stringer
@@ -55,8 +18,8 @@ type Checker interface {
 }
 
 type Configurer interface {
-	GetConfig() *CheckConfiguration
-	SetConfig(*CheckConfiguration) error
+	GetConfig() map[string]interface{}
+	SetConfig(map[string]interface{}) error
 }
 
 type ConfigurableChecker interface {
@@ -64,10 +27,10 @@ type ConfigurableChecker interface {
 	Configurer
 }
 
-var RepoChecks []Checker
+var RepoChecks map[string]Checker = map[string]Checker{}
 
 func AddCheck(check Checker) {
-	RepoChecks = append(RepoChecks, check)
+	RepoChecks[check.String()] = check
 }
 
 func CheckAllRepositories(repos []string) []*utils.CheckResultConsolidated {
@@ -87,47 +50,48 @@ func CheckAllRepositoriesSpecificChecks(repos, checks []string) []*utils.CheckRe
 	return results
 }
 
-func Configure(config *CheckConfiguration) error {
-	for _, check := range RepoChecks {
-		if check.String() == config.CheckName {
-			switch ctype := check.(type) {
-			case ConfigurableChecker:
-				return ctype.SetConfig(config)
-			default:
-				return errors.New("Check '" + config.CheckName + "' is not configurable.")
-			}
-		}
+func Configure(config *config.CheckConfig) error {
+	check, ok := RepoChecks[config.Name]
+	if !ok {
+		return errors.New("a check with name '" + config.Name + "' does not exist or is disabled")
 	}
-	return errors.New("A check with name '" + config.CheckName + "' is not registered.")
+	configurableCheck, configurable := check.(ConfigurableChecker)
+	if !configurable {
+		return errors.New("the check '" + config.Name + "' does not need any configuration")
+	}
+	return configurableCheck.SetConfig(config.Config)
 }
 
-func GetCurrentConfig(checkname string) (*CheckConfiguration, error) {
-	for _, check := range RepoChecks {
-		if check.String() == checkname {
-			switch ctype := check.(type) {
-			case ConfigurableChecker:
-				return ctype.GetConfig(), nil
-			default:
-				return nil, errors.New("Check '" + checkname + "' is not configurable.")
-			}
-		}
+func GetCurrentConfig(name string) (*config.CheckConfig, error) {
+	check, ok := RepoChecks[name]
+	if !ok {
+		return nil, errors.New("a check with name '" + name + "' does not exist or is disabled")
 	}
-	return nil, errors.New("A check with name '" + checkname + "' is not registered.")
+	configurableCheck, configurable := check.(ConfigurableChecker)
+	if !configurable {
+		return nil, errors.New("the check '" + name + "' does not need any configuration")
+	}
+	return &config.CheckConfig{
+		Name:    check.String(),
+		Enabled: config.CurrentConfig().CheckIsEnabled(check.String()),
+		Config:  configurableCheck.GetConfig(),
+	}, nil
 }
 
-func matchingChecks(checkNames []string) []Checker {
-	var res []Checker
+func matchingChecks(checkNames []string) map[string]Checker {
+	res := map[string]Checker{}
 	for _, name := range checkNames {
-		for _, check := range RepoChecks {
-			if name == check.String() {
-				res = append(res, check)
-			}
+		check, ok := RepoChecks[name]
+		if !ok {
+			log.Printf("Requested to check using '%s' but that check is not known.\n", name)
+			continue
 		}
+		res[name] = check
 	}
 	return res
 }
 
-func consolidateChecks(path string, checkFns []Checker) *utils.CheckResultConsolidated {
+func consolidateChecks(path string, checkFns map[string]Checker) *utils.CheckResultConsolidated {
 	repo, err := mygit.CloneRepo(path)
 	if err != nil {
 		return &utils.CheckResultConsolidated{
@@ -138,12 +102,12 @@ func consolidateChecks(path string, checkFns []Checker) *utils.CheckResultConsol
 	}
 	res := repositoryCheck(repo, checkFns)
 	if err := repo.Cleanup(); err != nil {
-		log.Printf("Error while cleaning up repo %s: %v", utils.RepoName(repo.Repo), err)
+		log.Printf("Error while cleaning up repo %s: %v\n", utils.RepoName(repo.Repo), err)
 	}
 	return res
 }
 
-func repositoryCheck(repo *mygit.ClonedRepo, checkFns []Checker) *utils.CheckResultConsolidated {
+func repositoryCheck(repo *mygit.ClonedRepo, checkFns map[string]Checker) *utils.CheckResultConsolidated {
 	res := &utils.CheckResultConsolidated{
 		Date:       time.Now(),
 		Repository: utils.RepoName(repo.Repo),
@@ -151,7 +115,11 @@ func repositoryCheck(repo *mygit.ClonedRepo, checkFns []Checker) *utils.CheckRes
 	}
 	waitGroup := new(sync.WaitGroup)
 	waitGroup.Add(len(checkFns))
-	for _, check := range checkFns {
+	for name, check := range checkFns {
+		if !config.CurrentConfig().CheckIsEnabled(name) {
+			waitGroup.Done()
+			continue
+		}
 		checkChan := make(chan utils.SingleCheck)
 		go func(r *mygit.ClonedRepo, checker Checker, outputs chan<- utils.SingleCheck) {
 			err := checker.Check(repo, checkChan)

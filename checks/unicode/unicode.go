@@ -1,8 +1,8 @@
 package unicode
 
 import (
-	"errors"
 	"encoding/json"
+	"errors"
 	"io/ioutil"
 	"log"
 	"regexp"
@@ -11,7 +11,6 @@ import (
 	"sync"
 	"unicode/utf8"
 
-	"github.com/MrWong99/gitscanner/checks"
 	mygit "github.com/MrWong99/gitscanner/git"
 	"github.com/MrWong99/gitscanner/utils"
 	"github.com/go-git/go-git/v5/plumbing"
@@ -32,49 +31,40 @@ var illegalUnicodeChars = []rune{
 }
 
 type UnicodeCharacterSearch struct {
-	cfg checks.CheckConfiguration
+	cfg map[string]interface{}
 }
 
 func (*UnicodeCharacterSearch) String() string {
 	return "SearchIllegalUnicodeCharacters"
 }
 
-func (bins *UnicodeCharacterSearch) GetConfig() *checks.CheckConfiguration {
-	return &bins.cfg
+func (bins *UnicodeCharacterSearch) GetConfig() map[string]interface{} {
+	return bins.cfg
 }
 
-func (bins *UnicodeCharacterSearch) SetConfig(c *checks.CheckConfiguration) error {
-	cfg, err := c.ParseConfigMap()
-	if err != nil {
-		return err
-	}
+func (bins *UnicodeCharacterSearch) SetConfig(cfg map[string]interface{}) error {
 	pat, ok := cfg["branchPattern"]
-	if !ok {
-		return errors.New("Given configuration for '" + bins.String() + "' did not contain mandatory config 'branchPattern'!")
-	}
-	switch strPat := pat.(type) {
-	case string:
-		if _, err := utils.ExtractPattern(strPat); err != nil {
-			return err
+	branchPattern := ".*"
+	if ok {
+		switch strPat := pat.(type) {
+		case string:
+			if _, err := utils.ExtractPattern(strPat); err != nil {
+				return err
+			}
+			branchPattern = strPat
+		default:
+			return errors.New("given configuration didn't have a string as 'branchPattern'")
 		}
-		bins.cfg = *c
-	default:
-		return errors.New("Given configuration for '" + bins.String() + "' didn't have a string as 'branchPattern'!")
+	}
+	bins.cfg = map[string]interface{}{
+		"branchPattern": branchPattern,
 	}
 	return nil
 }
 
-func (bins *UnicodeCharacterSearch) getPat() *regexp.Regexp {
-	pat, ok := bins.cfg.MustParseConfigMap()["branchPattern"]
-	if !ok {
-		return regexp.MustCompile(".*")
-	}
-	switch strPat := pat.(type) {
-	case string:
-		return regexp.MustCompile(strPat)
-	default:
-		return regexp.MustCompile(".*")
-	}
+func (check *UnicodeCharacterSearch) getPat() *regexp.Regexp {
+	pat, _ := check.cfg["branchPattern"].(string)
+	return regexp.MustCompile(pat)
 }
 
 func (check *UnicodeCharacterSearch) Check(wrapRepo *mygit.ClonedRepo, output chan<- utils.SingleCheck) error {
@@ -110,8 +100,8 @@ func (check *UnicodeCharacterSearch) Check(wrapRepo *mygit.ClonedRepo, output ch
 
 func getAdditionalInfo(f *object.File, illegalChar rune) datatypes.JSON {
 	bytes, err := json.Marshal(map[string]interface{}{
-		"filesize": utils.ByteCountDecimal(f.Size),
-		"filemode": f.Mode.String(),
+		"filesize":  utils.ByteCountDecimal(f.Size),
+		"filemode":  f.Mode.String(),
 		"character": strings.ReplaceAll(strconv.QuoteRuneToASCII(illegalChar), "\\", "\\\\"),
 	})
 	if err != nil {

@@ -1,12 +1,11 @@
 package binaryfile
 
 import (
-	"errors"
 	"encoding/json"
+	"errors"
 	"regexp"
 	"strings"
 
-	"github.com/MrWong99/gitscanner/checks"
 	mygit "github.com/MrWong99/gitscanner/git"
 	"github.com/MrWong99/gitscanner/utils"
 	"github.com/go-git/go-git/v5/plumbing"
@@ -15,49 +14,40 @@ import (
 )
 
 type BinarySearchCheck struct {
-	cfg checks.CheckConfiguration
+	cfg map[string]interface{}
 }
 
 func (*BinarySearchCheck) String() string {
 	return "SearchBinaries"
 }
 
-func (bins *BinarySearchCheck) GetConfig() *checks.CheckConfiguration {
-	return &bins.cfg
+func (bins *BinarySearchCheck) GetConfig() map[string]interface{} {
+	return bins.cfg
 }
 
-func (bins *BinarySearchCheck) SetConfig(c *checks.CheckConfiguration) error {
-	cfg, err := c.ParseConfigMap()
-	if err != nil {
-		return err
-	}
+func (bins *BinarySearchCheck) SetConfig(cfg map[string]interface{}) error {
 	pat, ok := cfg["branchPattern"]
-	if !ok {
-		return errors.New("Given configuration for '" + bins.String() + "' did not contain mandatory config 'branchPattern'!")
-	}
-	switch strPat := pat.(type) {
-	case string:
-		if _, err := utils.ExtractPattern(strPat); err != nil {
-			return err
+	branchPattern := ".*"
+	if ok {
+		switch strPat := pat.(type) {
+		case string:
+			if _, err := utils.ExtractPattern(strPat); err != nil {
+				return err
+			}
+			branchPattern = strPat
+		default:
+			return errors.New("given configuration didn't have a string as 'branchPattern'")
 		}
-		bins.cfg = *c
-	default:
-		return errors.New("Given configuration for '" + bins.String() + "' didn't have a string as 'branchPattern'!")
+	}
+	bins.cfg = map[string]interface{}{
+		"branchPattern": branchPattern,
 	}
 	return nil
 }
 
-func (bins *BinarySearchCheck) getPat() *regexp.Regexp {
-	pat, ok := bins.cfg.MustParseConfigMap()["branchPattern"]
-	if !ok {
-		return regexp.MustCompile(".*")
-	}
-	switch strPat := pat.(type) {
-	case string:
-		return regexp.MustCompile(strPat)
-	default:
-		return regexp.MustCompile(".*")
-	}
+func (check *BinarySearchCheck) getPat() *regexp.Regexp {
+	pat, _ := check.cfg["branchPattern"].(string)
+	return regexp.MustCompile(pat)
 }
 
 func (check *BinarySearchCheck) Check(wrapRepo *mygit.ClonedRepo, output chan<- utils.SingleCheck) error {
