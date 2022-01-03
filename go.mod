@@ -5,12 +5,17 @@ go 1.17
 require (
 	github.com/go-git/go-git/v5 v5.4.2
 	github.com/gorilla/mux v1.8.0
-	gorm.io/datatypes v1.0.4
+	gorm.io/datatypes v1.0.5
 	gorm.io/driver/sqlite v1.2.6
 	gorm.io/gorm v1.22.4
 )
 
-require golang.org/x/term v0.0.0-20201126162022-7de9c90e9dd1 // indirect
+require (
+	golang.org/x/term v0.0.0-20201126162022-7de9c90e9dd1 // indirect
+	golang.org/x/text v0.3.7 // indirect
+	gorm.io/driver/postgres v1.2.3 // indirect
+	gorm.io/driver/sqlserver v1.2.1 // indirect
+)
 
 require (
 	github.com/Microsoft/go-winio v0.4.16 // indirect
@@ -34,5 +39,5 @@ require (
 	golang.org/x/sys v0.0.0-20210615035016-665e8c7367d1 // indirect
 	gopkg.in/warnings.v0 v0.1.2 // indirect
 	gopkg.in/yaml.v3 v3.0.0-20210107192922-496545a6307b
-	gorm.io/driver/mysql v1.2.1 // indirect
+	gorm.io/driver/mysql v1.2.2 // indirect
 )
