@@ -5,6 +5,7 @@ import (
 	"io/ioutil"
 	"log"
 	"net/http"
+	"os"
 	"strconv"
 	"strings"
 	"time"
@@ -206,32 +207,56 @@ func handleError(err error, statusCode int, w http.ResponseWriter, r *http.Reque
 }
 
 func updateSshKey(keyInfo *SshPrivateKeyInfo) error {
+	privateKeyFileName := "privatekey.pem"
+	privateKeyPasswordFileName := "privatekeypassword.txt"
 	err := mygit.InitSshKey([]byte(keyInfo.Key), keyInfo.Password)
 	if err != nil {
 		return err
 	}
-	keyFile, err := encryption.EncryptConfigString(keyInfo.Key)
-	if err != nil {
-		return err
-	}
-	password, err := encryption.EncryptConfigString(keyInfo.Password)
-	if err != nil {
-		return err
-	}
+	// keyFile, err := encryption.EncryptConfigString(keyInfo.Key)
+	// if err != nil {
+	// 	return err
+	// }
+	// password, err := encryption.EncryptConfigString(keyInfo.Password)
+	// if err != nil {
+	// 	return err
+	// }
 	cfg := config.CurrentConfig()
 	if cfg.Auth == nil {
 		cfg.Auth = &config.AuthConfig{
 			Ssh: &config.SshConfig{
-				PrivateKeyFile: keyFile,
-				KeyPassphrase:  password,
+				PrivateKeyFile: "./"+privateKeyFileName,
+				KeyPassphrase:  "./"+privateKeyPasswordFileName,
 			},
 		}
 	} else {
 		cfg.Auth.Ssh = &config.SshConfig{
-			PrivateKeyFile: keyFile,
-			KeyPassphrase:  password,
+			PrivateKeyFile: "./"+privateKeyFileName,
+			KeyPassphrase:  "./"+privateKeyPasswordFileName,
 		}
 	}
+
+	keyHandle, err := os.OpenFile(privateKeyFileName, os.O_RDWR|os.O_CREATE, 0600)
+	if err != nil{
+		log.Printf("Could not open private key file %v", err)
+	}
+	defer keyHandle.Close()
+	_, err = keyHandle.WriteString(keyInfo.Key)
+	if err != nil{
+		log.Printf("Could not write bytes in private key file %v", err)
+	}
+	if key.Password != nil{
+		passwordHandle, err := os.OpenFile(privateKeyPasswordFileName, os.O_RDWR|os.O_CREATE, 0600)
+		if err != nil{
+			log.Printf("Could not open private key password file with error %v", err)
+		}
+		defer passwordHandle.Close()
+		_, err = passwordHandle.WriteString(keyInfo.Password)
+		if err != nil{
+			log.Printf("Could not write bytes in private key password file %v", err)
+		}
+	}
+	
 	return config.UpdateConfigFile()
 }
 
