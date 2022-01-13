@@ -208,8 +208,11 @@ func handleError(err error, statusCode int, w http.ResponseWriter, r *http.Reque
 
 func updateSshKey(keyInfo *SshPrivateKeyInfo) error {
 	privateKeyFileName := "privatekey.pem"
-	privateKeyPasswordFileName := "privatekeypassword.txt"
 	err := mygit.InitSshKey([]byte(keyInfo.Key), keyInfo.Password)
+	if err != nil {
+		return err
+	}
+	password, err := encryption.EncryptConfigString(keyInfo.Password)
 	if err != nil {
 		return err
 	}
@@ -218,17 +221,14 @@ func updateSshKey(keyInfo *SshPrivateKeyInfo) error {
 		cfg.Auth = &config.AuthConfig{
 			Ssh: &config.SshConfig{
 				PrivateKeyFile: "./"+privateKeyFileName,
-				KeyPassphrase:  "./"+privateKeyPasswordFileName,
+				KeyPassphrase:  password,
 			},
 		}
 	} else {
 		cfg.Auth.Ssh = &config.SshConfig{
 			PrivateKeyFile: "./"+privateKeyFileName,
-			KeyPassphrase:  "./"+privateKeyPasswordFileName,
+			KeyPassphrase:  password,
 		}
-	}
-	if keyInfo.Password == ""{
-		cfg.Auth.Ssh.KeyPassphrase = ""
 	}
 
 	keyHandle, err := os.OpenFile(privateKeyFileName, os.O_RDWR|os.O_CREATE, 0600)
@@ -239,18 +239,6 @@ func updateSshKey(keyInfo *SshPrivateKeyInfo) error {
 	_, err = keyHandle.WriteString(keyInfo.Key)
 	if err != nil{
 		log.Printf("Could not write bytes in private key file %v", err)
-	}
-	
-	if keyInfo.Password != ""{
-		passwordHandle, err := os.OpenFile(privateKeyPasswordFileName, os.O_RDWR|os.O_CREATE, 0600)
-		if err != nil{
-			log.Printf("Could not open private key password file with error %v", err)
-		}
-		defer passwordHandle.Close()
-		_, err = passwordHandle.WriteString(keyInfo.Password)
-		if err != nil{
-			log.Printf("Could not write bytes in private key password file %v", err)
-		}
 	}
 	
 	return config.UpdateConfigFile()
