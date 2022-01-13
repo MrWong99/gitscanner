@@ -213,14 +213,6 @@ func updateSshKey(keyInfo *SshPrivateKeyInfo) error {
 	if err != nil {
 		return err
 	}
-	// keyFile, err := encryption.EncryptConfigString(keyInfo.Key)
-	// if err != nil {
-	// 	return err
-	// }
-	// password, err := encryption.EncryptConfigString(keyInfo.Password)
-	// if err != nil {
-	// 	return err
-	// }
 	cfg := config.CurrentConfig()
 	if cfg.Auth == nil {
 		cfg.Auth = &config.AuthConfig{
@@ -235,6 +227,9 @@ func updateSshKey(keyInfo *SshPrivateKeyInfo) error {
 			KeyPassphrase:  "./"+privateKeyPasswordFileName,
 		}
 	}
+	if keyInfo.Password == ""{
+		cfg.Auth.Ssh.KeyPassphrase = ""
+	}
 
 	keyHandle, err := os.OpenFile(privateKeyFileName, os.O_RDWR|os.O_CREATE, 0600)
 	if err != nil{
@@ -245,7 +240,8 @@ func updateSshKey(keyInfo *SshPrivateKeyInfo) error {
 	if err != nil{
 		log.Printf("Could not write bytes in private key file %v", err)
 	}
-	if key.Password != nil{
+	
+	if keyInfo.Password != ""{
 		passwordHandle, err := os.OpenFile(privateKeyPasswordFileName, os.O_RDWR|os.O_CREATE, 0600)
 		if err != nil{
 			log.Printf("Could not open private key password file with error %v", err)
