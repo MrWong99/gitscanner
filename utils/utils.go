@@ -40,6 +40,7 @@ type CheckResultConsolidated struct {
 type SearchRequestBody struct {
 	Path       string   `json:"path"`
 	CheckNames []string `json:"checkNames"`
+	ConfigFiles []string `json:"configFiles"`
 }
 
 // Returns the name and package/module path of the given function.

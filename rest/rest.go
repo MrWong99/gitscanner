@@ -9,6 +9,7 @@ import (
 	"strconv"
 	"strings"
 	"time"
+	"fmt"
 
 	"github.com/MrWong99/gitscanner/checks"
 	"github.com/MrWong99/gitscanner/config"
@@ -21,6 +22,7 @@ import (
 
 func InitRouter(router *mux.Router) {
 	router.HandleFunc("/api/v1/checkRepos", handleCheckRequest).Methods("POST")
+	router.HandleFunc("/api/v1/staticCodeAnalysis", handleStaticCodeAnalysisRequest).Methods("POST")
 	router.HandleFunc("/api/v1/config/{checkName}", handleGetConfig).Methods("GET")
 	router.HandleFunc("/api/v1/config", handlePutConfig).Methods("PUT")
 	router.HandleFunc("/api/v1/config/sshkey", handlePutSshKey).Methods("PUT")
@@ -68,6 +70,27 @@ func handleCheckRequest(w http.ResponseWriter, r *http.Request) {
 	err = json.NewEncoder(w).Encode(checks)
 	if err != nil {
 		log.Printf("Error encoding response: %v\n", err)
+	}
+}
+
+// POST /api/v1/staticCodeAnalysis
+func handleStaticCodeAnalysisRequest(w http.ResponseWriter, r *http.Request) {
+	w.Header().Add("Content-Type", "application/json")
+	body, err := ioutil.ReadAll(r.Body)
+	if handleError(err, 400, w, r) {
+		return
+	}
+	var request utils.SearchRequestBody
+	err = json.Unmarshal(body, &request)
+	if handleError(err, 400, w, r) {
+		return
+	}
+	repos := strings.Split(request.Path, ",")
+	fmt.Println("Repos are: %v", repos)
+	for _, repo := range repos{
+		clonedRepo := mygit.ClonedRepo(repo)
+		fmt.Println("Scanning repo %v %v", repo, clonedRepo.LocalDir)
+		out, err := sast.semgrepScan(request.ConfigFiles, clonedRepo.LocalDir)	
 	}
 }
 
