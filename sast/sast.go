@@ -1,6 +1,12 @@
 package sast
 
-func semgrepScan(config []string, dir string){
+import (
+	"fmt"
+	"os/exec"
+	"bytes"
+)
+
+func SemgrepScan(config []string, dir string) (string, error){
 	fmt.Println(config)
 	var configuration string
 	var output bytes.Buffer
@@ -18,9 +24,11 @@ func semgrepScan(config []string, dir string){
 		err := cmd.Run()
 		if err != nil{
 			fmt.Println("Command errored out with error %v", err)
+			return "", err
 		}
 		// fmt.Println("out:", outb.String(), "\nerr:", errb.String())
 		output.WriteString(outb.String())
 	}
 	fmt.Println(output.String())
+	return output.String(), nil
 }

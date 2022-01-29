@@ -17,6 +17,7 @@ import (
 	"github.com/MrWong99/gitscanner/db/checkrepo"
 	mygit "github.com/MrWong99/gitscanner/git"
 	"github.com/MrWong99/gitscanner/utils"
+	"github.com/MrWong99/gitscanner/sast"
 	"github.com/gorilla/mux"
 )
 
@@ -87,11 +88,22 @@ func handleStaticCodeAnalysisRequest(w http.ResponseWriter, r *http.Request) {
 	}
 	repos := strings.Split(request.Path, ",")
 	fmt.Println("Repos are: %v", repos)
+	var clonedRepo *mygit.ClonedRepo
+	var semgrepResults []string
 	for _, repo := range repos{
-		clonedRepo := mygit.ClonedRepo(repo)
+		clonedRepo, err = mygit.CloneRepo(repo)
+		if handleError(err, 400, w, r) {
+			return
+		}
 		fmt.Println("Scanning repo %v %v", repo, clonedRepo.LocalDir)
-		out, err := sast.semgrepScan(request.ConfigFiles, clonedRepo.LocalDir)	
+		out, err := sast.SemgrepScan(request.ConfigFiles, clonedRepo.LocalDir)
+		if handleError(err, 400, w, r) {
+			return
+		}
+		semgrepResults = append(semgrepResults, out)	
 	}
+	fmt.Println("Done semgrep scan. Results here:\n%v", semgrepResults)
+	json.NewEncoder(w).Encode(semgrepResults)
 }
 
 // GET /api/v1/config/{checkName}
