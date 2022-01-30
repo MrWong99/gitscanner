@@ -53,7 +53,7 @@ type Acknowledge struct {
 
 type SASTResult struct {
 	Repo string `json:"Repo"`
-	Result []string `json:Result`
+	Result []byte `json:Result`
 }
 
 // POST /api/v1/checkRepos
@@ -94,8 +94,9 @@ func handleStaticCodeAnalysisRequest(w http.ResponseWriter, r *http.Request) {
 	repos := strings.Split(request.Path, ",")
 	fmt.Println("Repos are: %v", repos)
 	var clonedRepo *mygit.ClonedRepo
-	var semgrepResult SASTResult
-	var semgrepResults []SASTResult
+	// var semgrepResult SASTResult
+	// var semgrepResults []SASTResult
+	var s2 []byte
 	for _, repo := range repos{
 		clonedRepo, err = mygit.CloneRepo(repo)
 		if handleError(err, 400, w, r) {
@@ -106,12 +107,17 @@ func handleStaticCodeAnalysisRequest(w http.ResponseWriter, r *http.Request) {
 		if handleError(err, 400, w, r) {
 			return
 		}
-		semgrepResult.Repo = repo
-		semgrepResult.Result = out
-		semgrepResults = append(semgrepResults, semgrepResult) 	
+		// semgrepResult.Repo = repo
+		// semgrepResult.Result = out
+		// semgrepResults = append(semgrepResults, semgrepResult)
+		s2 = append(s2, out...) 	
 	}
-	fmt.Println("Done semgrep scan. Results here:\n%v", semgrepResults)
-	json.NewEncoder(w).Encode(semgrepResults)
+	// s2, err = json.Marshal(s2)
+	fmt.Println("Done semgrep scan. Results here:\n%v", string(s2))
+	// w.Header().Set("Content-Type", "application/json")
+	w.Write(s2)
+
+	// json.NewEncoder(w).Encode(semgrepResults)
 }
 
 // GET /api/v1/config/{checkName}

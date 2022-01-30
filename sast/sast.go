@@ -7,9 +7,14 @@ import (
 	"encoding/json"
 )
 
+// type SemgrepResults struct {
+//     Errors []string
+// 	Results []map[string]interface{}
+// }
+
 type SemgrepResults struct {
     Errors []string
-	Results []map[string]interface{}
+	Results []byte
 }
 
 type SemgrepOutput struct {
@@ -43,11 +48,12 @@ func ParseOutput(rawResults []map[string]interface{}) string {
 	return string(s4)
 }
 
-func SemgrepScan(config []string, dir string) ([]string, error){
+func SemgrepScan(config []string, dir string) ([]byte, error){
 	fmt.Println(config)
 	var configuration string
-	var output []string
-	var sOutput SemgrepResults
+	// var output []string
+	var output []byte
+	// var sOutput SemgrepResults
 	for _, cnf := range config{
 		if cnf == ""{
 			configuration = "--config=auto"
@@ -66,12 +72,22 @@ func SemgrepScan(config []string, dir string) ([]string, error){
 		}
 		// fmt.Println("out:", outb.String(), "\nerr:", errb.String())
 		// output.WriteString(outb.String())
-		err = json.Unmarshal(outb.Bytes(), &sOutput)
-		if err != nil{
-			fmt.Println("Error unmarshaling json ", err)
-		}
-		output = append(output, ParseOutput(sOutput.Results))
+		// err = json.Unmarshal(outb.Bytes(), &sOutput)
+		// if err != nil{
+		// 	fmt.Println("Error unmarshaling json ", err)
+		// }
+		// output = append(output, ParseOutput(sOutput.Results))
+		// fmt.Println(outb)
+		// fmt.Println(outb.String())
+		// output, err = json.Marshal(outb.Bytes())
+		output = append(output, outb.Bytes()...)
+		// fmt.Println(output)
+		// if err != nil{
+		// 	fmt.Println("Marshalling errored out with error %v", err)
+		// 	return nil, err
+		// }
 	}
-	fmt.Println(output)
+	// fmt.Println(output)
+
 	return output, nil
 }
