@@ -6,14 +6,18 @@
 # General server configuration.
 server:
   port: 16092                                 # The HTTP port to start the server on.
-  # tls:                                        # When provided the endpoint will be using HTTPS.
-  #   certFile: /home/thekoolhatkar/cert.pem       # Relative or absolute path of certificate (chain) in PEM format.
-  #   privateKeyFile: /home/thekoolhatkar/key.pem # Relative or absolute path of private key in PEM format.
+  tls:                                        # When provided the endpoint will be using HTTPS.
+    certFile: /some/path/server.crt.pem       # Relative or absolute path of certificate (chain) in PEM format.
+    privateKeyFile: /some/path/server.key.pem # Relative or absolute path of private key in PEM format.
 
 # Authentication methods to use when cloning repositories via Git.
 auth:
   ssh:
-    privateKeyFile: /home/thekoolhatkar/.ssh/id_rsa  # SSH private key file to use when cloning repositories.
+    privateKeyFile: /home/myuser/.ssh/id_rsa  # SSH private key file to use when cloning repositories.
+    keyPassphrase: ENC(3KnIfDCXFtsSqNdD0Q...) # Optional passphrase to decrypt the private key with.
+  basicAuth:
+    username: Mnaaz                           # Username for HTTP basic authentication.
+    password: ENC(3KnIfDCXFtsSqNdD0Q...)      # Password for HTTP basic authentication.
 
 # Configuration for every configurable check.
 checks:
