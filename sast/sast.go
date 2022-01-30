@@ -4,12 +4,50 @@ import (
 	"fmt"
 	"os/exec"
 	"bytes"
+	"encoding/json"
 )
 
-func SemgrepScan(config []string, dir string) (string, error){
+type SemgrepResults struct {
+    Errors []string
+	Results []map[string]interface{}
+}
+
+type SemgrepOutput struct {
+	CheckID string
+	Lines string
+	Message string
+}
+
+func ParseOutput(rawResults []map[string]interface{}) string {
+	var s2 []SemgrepOutput
+	var s3 SemgrepOutput
+	var tempmessage map[string]interface {}
+	for key, result := range rawResults {
+		fmt.Println("Reading value of key ", key)
+		// s2[key].Check_id = result["check_id"]
+		// s2[key].Lines = result["extra"]["lines"]
+		// s2[key].Message = result["extra"]["message"]
+		// fmt.Println(s2)
+		tempmessage = result["extra"].(map[string]interface {})
+		// fmt.Println(tempmessage["lines"])
+		s3.CheckID = result["check_id"].(string)
+		s3.Lines = tempmessage["lines"].(string)
+		s3.Message = tempmessage["message"].(string)
+		s2 = append(s2, s3)
+	}
+	s4, err := json.Marshal(s2)
+	if err != nil {
+		fmt.Println("Error while marshalling ", err)
+	}
+	fmt.Println(string(s4))
+	return string(s4)
+}
+
+func SemgrepScan(config []string, dir string) ([]string, error){
 	fmt.Println(config)
 	var configuration string
-	var output bytes.Buffer
+	var output []string
+	var sOutput SemgrepResults
 	for _, cnf := range config{
 		if cnf == ""{
 			configuration = "--config=auto"
@@ -24,11 +62,16 @@ func SemgrepScan(config []string, dir string) (string, error){
 		err := cmd.Run()
 		if err != nil{
 			fmt.Println("Command errored out with error %v", err)
-			return "", err
+			return nil, err
 		}
 		// fmt.Println("out:", outb.String(), "\nerr:", errb.String())
-		output.WriteString(outb.String())
+		// output.WriteString(outb.String())
+		err = json.Unmarshal(outb.Bytes(), &sOutput)
+		if err != nil{
+			fmt.Println("Error unmarshaling json ", err)
+		}
+		output = append(output, ParseOutput(sOutput.Results))
 	}
-	fmt.Println(output.String())
-	return output.String(), nil
+	fmt.Println(output)
+	return output, nil
 }
