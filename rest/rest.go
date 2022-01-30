@@ -9,7 +9,6 @@ import (
 	"strconv"
 	"strings"
 	"time"
-	"fmt"
 
 	"github.com/MrWong99/gitscanner/checks"
 	"github.com/MrWong99/gitscanner/config"
@@ -51,11 +50,6 @@ type Acknowledge struct {
 	Acknowledged bool `json:"acknowledged"`
 }
 
-type SASTResult struct {
-	Repo string `json:"Repo"`
-	Result []byte `json:Result`
-}
-
 // POST /api/v1/checkRepos
 func handleCheckRequest(w http.ResponseWriter, r *http.Request) {
 	w.Header().Add("Content-Type", "application/json")
@@ -81,43 +75,37 @@ func handleCheckRequest(w http.ResponseWriter, r *http.Request) {
 
 // POST /api/v1/staticCodeAnalysis
 func handleStaticCodeAnalysisRequest(w http.ResponseWriter, r *http.Request) {
+	var clonedRepo *mygit.ClonedRepo
+	var semgrepResults []byte
+	var request utils.SearchRequestBody
+	
 	w.Header().Add("Content-Type", "application/json")
 	body, err := ioutil.ReadAll(r.Body)
 	if handleError(err, 400, w, r) {
 		return
 	}
-	var request utils.SearchRequestBody
+
 	err = json.Unmarshal(body, &request)
 	if handleError(err, 400, w, r) {
 		return
 	}
+	
 	repos := strings.Split(request.Path, ",")
-	fmt.Println("Repos are: %v", repos)
-	var clonedRepo *mygit.ClonedRepo
-	// var semgrepResult SASTResult
-	// var semgrepResults []SASTResult
-	var s2 []byte
 	for _, repo := range repos{
 		clonedRepo, err = mygit.CloneRepo(repo)
 		if handleError(err, 400, w, r) {
 			return
 		}
-		fmt.Println("Scanning repo %v %v", repo, clonedRepo.LocalDir)
-		out, err := sast.SemgrepScan(request.ConfigFiles, clonedRepo.LocalDir)
+		scanResult, err := sast.SemgrepScan(request.ConfigFiles, clonedRepo.LocalDir)
 		if handleError(err, 400, w, r) {
 			return
 		}
-		// semgrepResult.Repo = repo
-		// semgrepResult.Result = out
-		// semgrepResults = append(semgrepResults, semgrepResult)
-		s2 = append(s2, out...) 	
+		semgrepResults = append(semgrepResults, scanResult...)
+		if err := clonedRepo.Cleanup(); err != nil {
+			log.Printf("Error while cleaning up repo %s: %v\n", utils.RepoName(clonedRepo.Repo), err)
+		}
 	}
-	// s2, err = json.Marshal(s2)
-	fmt.Println("Done semgrep scan. Results here:\n%v", string(s2))
-	// w.Header().Set("Content-Type", "application/json")
-	w.Write(s2)
-
-	// json.NewEncoder(w).Encode(semgrepResults)
+	w.Write(semgrepResults)
 }
 
 // GET /api/v1/config/{checkName}
