@@ -7,6 +7,7 @@ import (
 	"errors"
 )
 
+// Checks if Semgrep is installed on OS
 func SemgrepCheck() bool {
 	cmd := exec.Command("/bin/sh", "-c", "command -v semgrep")
 	if err := cmd.Run(); err != nil {
@@ -15,12 +16,15 @@ func SemgrepCheck() bool {
 	return true
 }
 
+
+// Scans given directory with given config using Semgrep.
+// Semgrep needs to be present as an executable in PATH environment variable  
 func SemgrepScan(config []string, dir string) ([]byte, error){
 	var configuration string
 	var output []byte
 
 	if !SemgrepCheck(){
-		err := errors.New("Semgrep command doesn't exist. Please install semgrep.")
+		err := errors.New("Semgrep command doesn't exist. Please install semgrep. Refer https://semgrep.dev/")
 		log.Print(err)
 		return nil, err
 	}
@@ -37,7 +41,7 @@ func SemgrepScan(config []string, dir string) ([]byte, error){
 		cmd.Stderr = &errBuffer
 		err := cmd.Run()
 		if err != nil{
-			log.Printf("Semgrep command errored out with error ", err)
+			log.Printf("Semgrep command errored out with error %v", err)
 			return nil, err
 		}
 		output = append(output, outBuffer.Bytes()...)
