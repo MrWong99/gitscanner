@@ -16,11 +16,13 @@ import (
 	"github.com/MrWong99/gitscanner/db/checkrepo"
 	mygit "github.com/MrWong99/gitscanner/git"
 	"github.com/MrWong99/gitscanner/utils"
+	"github.com/MrWong99/gitscanner/sast"
 	"github.com/gorilla/mux"
 )
 
 func InitRouter(router *mux.Router) {
 	router.HandleFunc("/api/v1/checkRepos", handleCheckRequest).Methods("POST")
+	router.HandleFunc("/api/v1/staticCodeAnalysis", handleStaticCodeAnalysisRequest).Methods("POST")
 	router.HandleFunc("/api/v1/config/{checkName}", handleGetConfig).Methods("GET")
 	router.HandleFunc("/api/v1/config", handlePutConfig).Methods("PUT")
 	router.HandleFunc("/api/v1/config/sshkey", handlePutSshKey).Methods("PUT")
@@ -69,6 +71,41 @@ func handleCheckRequest(w http.ResponseWriter, r *http.Request) {
 	if err != nil {
 		log.Printf("Error encoding response: %v\n", err)
 	}
+}
+
+// POST /api/v1/staticCodeAnalysis
+func handleStaticCodeAnalysisRequest(w http.ResponseWriter, r *http.Request) {
+	var clonedRepo *mygit.ClonedRepo
+	var semgrepResults []byte
+	var request utils.SearchRequestBody
+	
+	w.Header().Add("Content-Type", "application/json")
+	body, err := ioutil.ReadAll(r.Body)
+	if handleError(err, 400, w, r) {
+		return
+	}
+
+	err = json.Unmarshal(body, &request)
+	if handleError(err, 400, w, r) {
+		return
+	}
+	
+	repos := strings.Split(request.Path, ",")
+	for _, repo := range repos{
+		clonedRepo, err = mygit.CloneRepo(repo)
+		if handleError(err, 400, w, r) {
+			return
+		}
+		scanResult, err := sast.SemgrepScan(request.ConfigFiles, clonedRepo.LocalDir)
+		if handleError(err, 400, w, r) {
+			return
+		}
+		semgrepResults = append(semgrepResults, scanResult...)
+		if err := clonedRepo.Cleanup(); err != nil {
+			log.Printf("Error while cleaning up repo %s: %v\n", utils.RepoName(clonedRepo.Repo), err)
+		}
+	}
+	w.Write(semgrepResults)
 }
 
 // GET /api/v1/config/{checkName}
