@@ -7,7 +7,7 @@ require (
 	github.com/gorilla/mux v1.8.0
 	gorm.io/datatypes v1.0.4
 	gorm.io/driver/sqlite v1.2.6
-	gorm.io/gorm v1.22.4
+	gorm.io/gorm v1.23.3
 )
 
 require golang.org/x/term v0.0.0-20201126162022-7de9c90e9dd1 // indirect
