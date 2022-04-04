@@ -18,7 +18,7 @@ jobs:
       run: echo "$GITHUB_REF_NAME" > VERSION
 
     - name: Setup Node
-      uses: actions/setup-node@v2.5.0
+      uses: actions/setup-node@v3.1.0
       with:
         node-version: 17
         registry-url: https://registry.npmjs.org/
