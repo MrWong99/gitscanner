@@ -10,7 +10,7 @@ require (
 	gorm.io/gorm v1.22.4
 )
 
-require golang.org/x/term v0.0.0-20201126162022-7de9c90e9dd1 // indirect
+require golang.org/x/term v0.1.0 // indirect
 
 require (
 	github.com/Microsoft/go-winio v0.4.16 // indirect
@@ -29,9 +29,9 @@ require (
 	github.com/mitchellh/go-homedir v1.1.0 // indirect
 	github.com/sergi/go-diff v1.1.0 // indirect
 	github.com/xanzy/ssh-agent v0.3.0 // indirect
-	golang.org/x/crypto v0.0.0-20211117183948-ae814b36b871
-	golang.org/x/net v0.0.0-20211112202133-69e39bad7dc2 // indirect
-	golang.org/x/sys v0.0.0-20210615035016-665e8c7367d1 // indirect
+	golang.org/x/crypto v0.1.0
+	golang.org/x/net v0.1.0 // indirect
+	golang.org/x/sys v0.1.0 // indirect
 	gopkg.in/warnings.v0 v0.1.2 // indirect
 	gopkg.in/yaml.v3 v3.0.0-20210107192922-496545a6307b
 	gorm.io/driver/mysql v1.2.1 // indirect
