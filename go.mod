@@ -1,6 +1,6 @@
 module github.com/MrWong99/gitscanner
 
-go 1.17
+go 1.24.0
 
 require (
 	github.com/go-git/go-git/v5 v5.4.2
@@ -10,7 +10,7 @@ require (
 	gorm.io/gorm v1.24.6
 )
 
-require golang.org/x/term v0.6.0 // indirect
+require golang.org/x/term v0.37.0 // indirect
 
 require (
 	github.com/Microsoft/go-winio v0.4.16 // indirect
@@ -29,9 +29,9 @@ require (
 	github.com/mitchellh/go-homedir v1.1.0 // indirect
 	github.com/sergi/go-diff v1.1.0 // indirect
 	github.com/xanzy/ssh-agent v0.3.0 // indirect
-	golang.org/x/crypto v0.7.0
-	golang.org/x/net v0.8.0 // indirect
-	golang.org/x/sys v0.6.0 // indirect
+	golang.org/x/crypto v0.45.0
+	golang.org/x/net v0.47.0 // indirect
+	golang.org/x/sys v0.38.0 // indirect
 	gopkg.in/warnings.v0 v0.1.2 // indirect
 	gopkg.in/yaml.v3 v3.0.0-20210107192922-496545a6307b
 	gorm.io/driver/mysql v1.2.1 // indirect
